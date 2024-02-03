@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Thread;
+use App\Services\AI\AIModels;
+use App\Services\AI\Chat;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,7 +22,7 @@ class HomeController extends Controller
     public function createThread(Request $request)
     {
         $thread = $request->user()->threads()->create([
-            'title' => "Sans titre",
+            'title' => 'Sans titre',
         ]);
 
         return redirect()->route('threads.show', ['threadId' => $thread->id]);
@@ -29,6 +31,7 @@ class HomeController extends Controller
     public function showThread(int $threadId)
     {
         $thread = Thread::findOrFail($threadId);
+        $thread->load('messages');
 
         return Inertia::render('Thread', [
             'thread' => $thread,
@@ -42,24 +45,27 @@ class HomeController extends Controller
         $thread->update([
             'title' => $request->input('title'),
         ]);
-
-        return back();
     }
 
     public function sendMessage(int $threadId, Request $request)
     {
         $request->validate([
-            'message' => 'required|string',
+            'prompt' => 'required|string',
         ]);
 
         $thread = Thread::findOrFail($threadId);
 
         $thread->messages()->create([
             'role' => 'user',
-            'body' => $request->input('message'),
+            'body' => $request->input('prompt'),
         ]);
+    }
 
-        return back();
+    public function answerThread(int $threadId, Request $request)
+    {
+        $thread = Thread::findOrFail($threadId);
+
+        Chat::create($thread, AIModels::NeuralHermes);
     }
 
     public function deleteThread(int $threadId)
@@ -67,18 +73,6 @@ class HomeController extends Controller
         $thread = Thread::findOrFail($threadId);
 
         $thread->delete();
-
-        return redirect()->route('dashboard');
-    }
-
-    // delete all messages from a user
-    public function deleteMessages(int $userId)
-    {
-        $threads = Thread::where('user_id', $userId)->get();
-
-        foreach ($threads as $thread) {
-            $thread->messages()->delete();
-        }
 
         return redirect()->route('dashboard');
     }

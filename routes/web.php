@@ -3,7 +3,6 @@
 use App\Http\Controllers\HomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,11 +25,10 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+
+    Route::post('/threads/create', [HomeController::class, 'createThread'])->name('threads.create');
+    Route::get('/threads/{threadId}', [HomeController::class, 'showThread'])->name('threads.show');
+    Route::post('/threads/answer/{threadId}', [HomeController::class, 'answerThread'])->name('threads.answer');
+
+    Route::post('/messages/send/{threadId}', [HomeController::class, 'sendMessage'])->name('messages.send');
 });
-
-
-Route::post('/threads/create', [HomeController::class, 'createThread'])->name('threads.create');
-
-Route::get('/threads/{threadId}', [HomeController::class, 'showThread'])->name('threads.show');
-
-Route::post('/messages/send', [HomeController::class, 'sendMessage'])->name('messages.send');

@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | OpenAI API Key and Organization
@@ -14,6 +13,7 @@ return [
 
     'api_key' => env('OPENAI_API_KEY'),
     'organization' => env('OPENAI_ORGANIZATION'),
+    'api_endpoint' => env('OPENAI_BASE_URL', 'https://api.endpoints.anyscale.com/v1'),
 
     /*
     |--------------------------------------------------------------------------

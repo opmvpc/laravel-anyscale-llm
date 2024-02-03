@@ -20,4 +20,14 @@ class Thread extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function history(): array
+    {
+        return $this->messages->map(function ($message) {
+            return [
+                'role' => $message->role,
+                'content' => $message->body,
+            ];
+        })->toArray();
+    }
 }
