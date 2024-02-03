@@ -8,13 +8,16 @@ use App\Services\AI\Chat;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class HomeController extends Controller
+class ConversationController extends Controller
 {
     public function index()
     {
-        $threads = Thread::where('user_id', auth()->id())->get();
+        // sort threads by last message
+        $threads = Thread::where('user_id', auth()->id())->with('messages')->get()->sortByDesc(function ($thread) {
+            return $thread->messages->last()->created_at;
+        })->values();
 
-        return Inertia::render('Home', [
+        return Inertia::render('Conversations/Index', [
             'threads' => $threads,
         ]);
     }
@@ -32,18 +35,25 @@ class HomeController extends Controller
     {
         $thread = Thread::findOrFail($threadId);
         $thread->load('messages');
+        $models = AIModels::toArray();
 
-        return Inertia::render('Thread', [
+        $selectedModel = session('selectedModel', AIModels::NeuralHermes);
+
+        return Inertia::render('Conversations/Show', [
             'thread' => $thread,
+            'models' => $models,
+            'selectedModel' => $selectedModel->value,
         ]);
     }
 
-    public function updateThread(int $threadId, Request $request)
+    public function updateThreadTitle(int $threadId)
     {
         $thread = Thread::findOrFail($threadId);
 
+        $title = Chat::title($thread, AIModels::Mixtral);
+
         $thread->update([
-            'title' => $request->input('title'),
+            'title' => $title,
         ]);
     }
 
@@ -63,6 +73,10 @@ class HomeController extends Controller
 
     public function answerThread(int $threadId, Request $request)
     {
+        $request->validate([
+            'model' => ['required', 'string', 'in:'.implode(',', collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
+        ]);
+
         $thread = Thread::findOrFail($threadId);
 
         Chat::create($thread, AIModels::NeuralHermes);
@@ -75,5 +89,15 @@ class HomeController extends Controller
         $thread->delete();
 
         return redirect()->route('dashboard');
+    }
+
+    public function updateUserSelectedModel(Request $request)
+    {
+        $request->validate([
+            'model' => ['required', 'string', 'in:'.implode(',', collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
+        ]);
+
+        session(['selectedModel' => AIModels::tryFrom(request('model'))]);
+        session()->flash('flash.banner', 'Modèle sélectionné mis à jour avec succès.');
     }
 }
