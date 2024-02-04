@@ -30,13 +30,18 @@ const formAnswer = useForm({
 });
 
 const send = async () => {
+    if (isAnswering.value) {
+        return;
+    }
+
     form.post(route("messages.send", { threadId: props.thread.id }), {
         errorBag: "prompt",
         preserveScroll: true,
-        onSuccess: async () => {
+        onStart: () => {
             form.reset();
+        },
+        onSuccess: async () => {
             scrollChatBox();
-            updateTitle();
             await answer();
         },
     });
@@ -74,17 +79,25 @@ const formUpdateTitle = useForm({
     _method: "POST",
 });
 
+const isTitleUpdating = ref(false);
+
 const updateTitle = () => {
     if (
         (props.thread.messages.length > 1 &&
             props.thread.messages.length < 7) ||
-        (props.thread.messages.length % 5 === 0 &&
+        (props.thread.messages.length % 4 === 0 &&
             props.thread.messages.length > 6)
     ) {
+        isTitleUpdating.value = true;
         formUpdateTitle.post(
             route("threads.updateTitle", { threadId: props.thread.id }),
             {
-                onSuccess: () => {},
+                onSuccess: () => {
+                    isTitleUpdating.value = false;
+                },
+                onError: () => {
+                    isTitleUpdating.value = false;
+                },
             }
         );
     }
@@ -111,12 +124,24 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 </script>
 
 <template>
-    <AppLayout title="Dashboard">
+    <AppLayout :title="`${thread.title} - Conversations`">
         <template #header>
             <div class="flex justify-between space-x-6 items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ thread.title }}
-                </h2>
+                <div>
+                    <h2
+                        class="flex space-x-2 items-baseline font-semibold text-xl text-gray-800 leading-tight"
+                    >
+                        <div>
+                            {{ thread.title }}
+                        </div>
+                        <div>
+                            <LoadingIcon
+                                v-if="isTitleUpdating"
+                                class="-mb-1 w-5 h-5 animate-spin text-blue-900"
+                            />
+                        </div>
+                    </h2>
+                </div>
                 <div class="">
                     <Link
                         :href="route('threads.index')"
@@ -159,7 +184,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                     :class="{
                                         'self-end bg-green-100 text-right':
                                             message.role === 'user',
-                                        'col-span-8 bg-blue-200':
+                                        'col-span-8 bg-indigo-100':
                                             message.role === 'assistant',
                                     }"
                                     v-for="message in thread.messages"
@@ -229,7 +254,9 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                     </ActionMessage>
 
                     <PrimaryButton
-                        :class="{ 'opacity-25': form.processing }"
+                        :class="{
+                            'opacity-25': form.processing || isAnswering,
+                        }"
                         :disabled="form.processing"
                     >
                         Envoyer

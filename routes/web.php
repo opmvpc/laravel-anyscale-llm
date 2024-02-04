@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\InstructionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 
@@ -30,8 +31,12 @@ Route::middleware([
     Route::post('/threads/update-title/{threadId}', [ConversationController::class, 'updateThreadTitle'])->name('threads.updateTitle');
     Route::get('/threads/{threadId}', [ConversationController::class, 'showThread'])->name('threads.show');
     Route::post('/threads/answer/{threadId}', [ConversationController::class, 'answerThread'])->name('threads.answer');
+    Route::delete('/threads/{threadId}', [ConversationController::class, 'deleteThread'])->name('threads.delete');
 
     Route::post('/messages/send/{threadId}', [ConversationController::class, 'sendMessage'])->name('messages.send');
 
     Route::post('/models/select', [ConversationController::class, 'updateUserSelectedModel'])->name('models.select');
+
+    Route::get('/instructions', [InstructionController::class, 'index'])->name('instructions.index');
+    Route::post('/instructions', [InstructionController::class, 'update'])->name('instructions.update');
 });

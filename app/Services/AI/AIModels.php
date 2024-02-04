@@ -27,42 +27,52 @@ enum AIModels: string
             [
                 'name' => 'NeuralHermes 7B',
                 'value' => self::NeuralHermes,
+                'maxTokens' => 16384,
             ],
             [
                 'name' => 'OpenOrca 7B',
                 'value' => self::OpenOrca,
+                'maxTokens' => 8192,
             ],
             [
                 'name' => 'Zephyr 7B',
                 'value' => self::Zephyr,
+                'maxTokens' => 16384,
             ],
             [
                 'name' => 'Mistral 7B',
                 'value' => self::Mistral,
+                'maxTokens' => 16384,
             ],
             [
                 'name' => 'Mixtral 8x7B',
                 'value' => self::Mixtral,
+                'maxTokens' => 32768,
             ],
             [
                 'name' => 'Llama2 7B',
                 'value' => self::Llama7B,
+                'maxTokens' => 4096,
             ],
             [
                 'name' => 'Llama2 13B',
                 'value' => self::Llama13B,
+                'maxTokens' => 4096,
             ],
             [
                 'name' => 'Llama2 70B',
                 'value' => self::Llama70B,
+                'maxTokens' => 4096,
             ],
             [
                 'name' => 'CodeLlama 34B',
                 'value' => self::CodeLlama34B,
+                'maxTokens' => 16384,
             ],
             [
                 'name' => 'CodeLlama 70B',
                 'value' => self::CodeLlama70B,
+                'maxTokens' => 4096,
             ],
         ];
     }

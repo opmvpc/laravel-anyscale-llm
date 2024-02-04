@@ -60,6 +60,12 @@ const logout = () => {
                                 >
                                     Conversations
                                 </NavLink>
+                                <NavLink
+                                    :href="route('instructions.index')"
+                                    :active="route().current('instructions.*')"
+                                >
+                                    Instructions
+                                </NavLink>
                             </div>
                         </div>
 
@@ -348,6 +354,12 @@ const logout = () => {
                             :active="route().current('threads.*')"
                         >
                             Conversations
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('instructions.index')"
+                            :active="route().current('instructions.*')"
+                        >
+                            Instructions
                         </ResponsiveNavLink>
                     </div>
 

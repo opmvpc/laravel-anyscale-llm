@@ -10,11 +10,11 @@ return new class() extends Migration {
      */
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('instructions', function (Blueprint $table) {
             $table->id();
-            $table->text('body');
-            $table->enum('role', ['user', 'assistant']);
-            $table->foreignId('thread_id')->constrained()->onDelete('cascade');
+            $table->text('personal')->nullable();
+            $table->text('behavior');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -24,6 +24,6 @@ return new class() extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        Schema::dropIfExists('instructions');
     }
 };

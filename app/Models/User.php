@@ -63,4 +63,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Thread::class);
     }
+
+    public function instruction()
+    {
+        return $this->hasOne(Instruction::class);
+    }
 }

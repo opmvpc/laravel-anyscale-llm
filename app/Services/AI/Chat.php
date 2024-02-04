@@ -12,13 +12,10 @@ class Chat
     public static function create(Thread $thread, AIModels $model)
     {
         $date = date('Y-m-d');
+        $userName = $thread->user->name;
+        $userLanguage = app()->getLocale();
 
-        $client = self::client();
-
-        $response = $client->chat()->create([
-            'model' => $model->value,
-            'messages' => [
-                ['role' => 'system', 'content' => <<<EOT
+        $systemPrompt = <<<EOT
                     # Helpful Assistant
 
                     ## Instructions
@@ -32,7 +29,32 @@ class Chat
 
                     ## Information
                     Today's date is : {$date}
-                    EOT,
+                    User's name is : {$userName}
+                    User Language : {$userLanguage}
+                    EOT;
+
+        $userInstructions = $thread->user->instruction;
+
+        if ($userInstructions) {
+            $personalUserInstructions = $userInstructions?->personal ?? 'No personal instructions provided.';
+            $behaviorUserInstructions = $userInstructions?->behavior ?? 'No behavior instructions provided.';
+
+            $systemPrompt .= <<<EOT
+                    ## User's instructions:
+                    Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
+                    ### Personal
+                    {$personalUserInstructions}
+                    ### Behavior
+                    {$behaviorUserInstructions}
+                    EOT;
+        }
+
+        $client = self::client();
+
+        $response = $client->chat()->create([
+            'model' => $model->value,
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt,
                 ],
                 ...$thread->history(),
             ],
@@ -42,6 +64,10 @@ class Chat
             'role' => 'assistant',
             'body' => Str::markdown($response['choices'][0]['message']['content']),
         ]);
+
+        $thread->update([
+            'token_count' => $response['usage']['total_tokens'],
+        ]);
     }
 
     public static function title(Thread $thread, AIModels $model)
@@ -50,41 +76,45 @@ class Chat
             throw new \InvalidArgumentException('Model does not support json mode. Use Mixtral or Mistral instead.');
         }
 
-        $client = self::client();
         $currentTitle = $thread->title;
+        $userLanguage = app()->getLocale();
 
         $messages = [
             ['role' => 'system', 'content' => <<<EOT
-                # Generate a conversation title
+                # Conversation title assistant
 
                 ## Instructions
-                - You are a helpful assistant that needs to generate the best title for a conversation.
-                - First, Guess the language used by the user.
+                - You are a helpful assistant tasked to generate the best title for a conversation.
                 - Analyze the conversation and generate a title that best describes the conversation.
-                - The title should be in the language used by the user.
+                - The title should be written in the language provided in the Information section.
                 - Keep the current title if you cannot generate a better one.
                 - Use the reasoning field to explain why you generated the title.
                 - Your answer should be in the answer field.
 
                 ## Information
                 Current title: {$currentTitle}
+                User Language: {$userLanguage}
 
                 ## Output format
                 - a json object
 
                 ## Example
+                Here is an example of a valid response. The example is generic and should be adapted to the current conversation. To do so, you should replace the placeholder values (eg: [LANG], [SUBJECT], [ACTION], [REASON], [NEW TITLE]) with the correct values to help you reason step by step before generating the title.
+
                 ```json
                 {
                     "reasoning": [
-                        "The user is speaking in French.",
-                        "The conversation is about a problem with the internet connection.",
-                        "The assistant is trying to help the user by asking questions and providing solutions.",
-                        "The current title is not descriptive enough.",
-                        "I should generate a better title.",
+                        "The provided language is [LANG].",
+                        "The conversation is about [SUBJECT].",
+                        "The assistant is trying to [ACTION].",
+                        "But the assistant is not able to [ACTION].",
+                        "The current title is not [REASON].",
+                        "I should [ACTION] to generate a better title.",
+                        "[NEW TITLE] will be a better match!"
                     ],
                     "answer": {
-                        "language": "fr",
-                        "title": "Problème de connexion à internet"
+                        "language": "[LANG]",
+                        "title": "[NEW TITLE]"
                     }
                 }
                 ```
@@ -92,13 +122,9 @@ class Chat
                 EOT,
             ],
             ...$thread->history(),
-            [
-                'role' => 'user',
-                'content' => <<<'EOT'
-                    Find the best title for this conversation. Respond with the provided output format.
-                    EOT,
-            ],
         ];
+
+        $client = self::client();
 
         $response = $client->chat()->create([
             'model' => $model->value,
@@ -138,7 +164,6 @@ class Chat
         ]);
 
         $json = $response['choices'][0]['message']['content'];
-        dump($json);
         $data = json_decode($json, true);
 
         return $data['answer']['title'] ?? $currentTitle;

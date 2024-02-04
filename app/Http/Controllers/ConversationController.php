@@ -6,16 +6,20 @@ use App\Models\Thread;
 use App\Services\AI\AIModels;
 use App\Services\AI\Chat;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ConversationController extends Controller
 {
     public function index()
     {
-        // sort threads by last message
-        $threads = Thread::where('user_id', auth()->id())->with('messages')->get()->sortByDesc(function ($thread) {
-            return $thread->messages->last()->created_at;
-        })->values();
+        $threads = Thread::query()->where('user_id', auth()->id())->orderByDesc('updated_at')->get()->map(function ($thread) {
+            return [
+                'id' => $thread->id,
+                'title' => $thread->title,
+                'updatedAtDiff' => $thread->updated_at->diffForHumans(),
+            ];
+        });
 
         return Inertia::render('Conversations/Index', [
             'threads' => $threads,
@@ -50,7 +54,7 @@ class ConversationController extends Controller
     {
         $thread = Thread::findOrFail($threadId);
 
-        $title = Chat::title($thread, AIModels::Mixtral);
+        $title = Chat::title($thread, AIModels::Mistral);
 
         $thread->update([
             'title' => $title,
@@ -69,12 +73,14 @@ class ConversationController extends Controller
             'role' => 'user',
             'body' => $request->input('prompt'),
         ]);
+
+        $thread->touch();
     }
 
     public function answerThread(int $threadId, Request $request)
     {
         $request->validate([
-            'model' => ['required', 'string', 'in:'.implode(',', collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
+            'model' => ['required', 'string', Rule::in(collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
         ]);
 
         $thread = Thread::findOrFail($threadId);
@@ -88,13 +94,13 @@ class ConversationController extends Controller
 
         $thread->delete();
 
-        return redirect()->route('dashboard');
+        session()->flash('flash.banner', 'Conversation supprimée avec succès.');
     }
 
     public function updateUserSelectedModel(Request $request)
     {
         $request->validate([
-            'model' => ['required', 'string', 'in:'.implode(',', collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
+            'model' => ['required', 'string', Rule::in(collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
         ]);
 
         session(['selectedModel' => AIModels::tryFrom(request('model'))]);
