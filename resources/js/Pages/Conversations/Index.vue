@@ -14,12 +14,12 @@ const props = defineProps({
     conversations: Array,
 });
 
-const form = useForm({
+const formCreateConversation = useForm({
     _method: "POST",
 });
 
 const createConversation = () => {
-    form.post(route("conversations.create"), {
+    formCreateConversation.post(route("conversations.create"), {
         preserveScroll: true,
     });
 };
@@ -66,8 +66,10 @@ const closeModal = () => {
                 <div class="">
                     <PrimaryButton
                         @click="createConversation"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
+                        :class="{
+                            'opacity-25': formCreateConversation.processing,
+                        }"
+                        :disabled="formCreateConversation.processing"
                         title="Nouvelle conversation"
                     >
                         <ConversationIcon class="h-4 w-4" />

@@ -7,7 +7,6 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextareaInput from "@/Components/TextareaInput.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { useForm } from "@inertiajs/vue3";
-import { onMounted } from "vue";
 
 const props = defineProps({
     instruction: Object,
@@ -38,10 +37,6 @@ const sendBehavior = async () => {
         onSuccess: async () => {},
     });
 };
-
-onMounted(() => {
-    console.log(props.instruction);
-});
 </script>
 
 <template>

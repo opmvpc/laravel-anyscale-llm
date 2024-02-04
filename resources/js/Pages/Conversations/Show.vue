@@ -87,6 +87,16 @@ const scrollChatBox = () => {
     }
 };
 
+const formCreateConversation = useForm({
+    _method: "POST",
+});
+
+const createConversation = () => {
+    formCreateConversation.post(route("conversations.create"), {
+        preserveScroll: true,
+    });
+};
+
 onMounted(() => {
     scrollChatBox();
 });
@@ -177,8 +187,10 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                     </Link>
                     <PrimaryButton
                         @click="createConversation"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
+                        :class="{
+                            'opacity-25': formCreateConversation.processing,
+                        }"
+                        :disabled="formCreateConversation.processing"
                         title="Nouvelle conversation"
                     >
                         <ConversationIcon class="h-4 w-4" />
