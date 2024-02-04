@@ -49,8 +49,37 @@ class AITest extends TestCase
             ]);
         }
 
-        $title = Chat::title($conversation, AIModels::Mixtral);
+        $title = Chat::title($conversation, AIModels::Mistral);
 
         $this->assertIsString($title);
+    }
+
+    public function testEmptyChat(): void
+    {
+        $user = User::factory()->create();
+        $conversation = $user->conversations()->create([
+            'title' => 'Sans titre',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        Chat::title($conversation, AIModels::Mistral);
+    }
+
+    public function testChatWithAnInvalidModel(): void
+    {
+        $user = User::factory()->create();
+        $conversation = $user->conversations()->create([
+            'title' => 'Sans titre',
+        ]);
+
+        $conversation->messages()->create([
+            'role' => 'user',
+            'body' => 'Hello!',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        Chat::title($conversation, AIModels::Llama7B);
     }
 }

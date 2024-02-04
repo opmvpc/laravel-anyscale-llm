@@ -75,6 +75,10 @@ class Chat
 
     public static function title(Conversation $conversation, AIModels $model)
     {
+        if (0 === $conversation->messages()->count()) {
+            throw new \InvalidArgumentException('Cannot generate a title for an empty conversation.');
+        }
+
         if (AIModels::Mixtral !== $model && AIModels::Mistral !== $model) {
             throw new \InvalidArgumentException('Model does not support json mode. Use Mixtral or Mistral instead.');
         }
@@ -168,6 +172,8 @@ class Chat
 
         $json = $response['choices'][0]['message']['content'];
         $data = json_decode($json, true);
+
+        // dump($data);
 
         return $data['answer']['title'] ?? $currentTitle;
     }
