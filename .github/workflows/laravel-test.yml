@@ -12,18 +12,47 @@ jobs:
     strategy:
       matrix:
         php-version: ["8.2", "8.3"]
+        node-version: ["20"] # Choisissez la version de Node.js qui correspond à votre projet
 
     steps:
       - uses: actions/checkout@v2
-      - name: Setup PHP, with Composer and necessary extensions
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Cache Node.js Dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite
           tools: composer:v2
 
-      - name: Install Dependencies
+      - name: Install PHP dependencies
         run: composer install --prefer-dist --no-progress
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Compile assets
+        run: npm run prod
 
       - name: Setup Application
         run: |
