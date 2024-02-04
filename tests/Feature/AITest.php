@@ -38,18 +38,18 @@ class AITest extends TestCase
         ];
 
         $user = User::factory()->create();
-        $thread = $user->threads()->create([
+        $conversation = $user->conversations()->create([
             'title' => 'Sans titre',
         ]);
 
         foreach ($history as $message) {
-            $thread->messages()->create([
+            $conversation->messages()->create([
                 'body' => $message['content'],
                 'role' => $message['role'],
             ]);
         }
 
-        $title = Chat::title($thread, AIModels::Mixtral);
+        $title = Chat::title($conversation, AIModels::Mixtral);
         dump($title);
 
         $this->assertIsString($title);
