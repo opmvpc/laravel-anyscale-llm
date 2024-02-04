@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Thread;
+use App\Models\Conversation;
 use App\Services\AI\AIModels;
 use App\Services\AI\Chat;
 use Illuminate\Http\Request;
@@ -13,93 +13,104 @@ class ConversationController extends Controller
 {
     public function index()
     {
-        $threads = Thread::query()->where('user_id', auth()->id())->orderByDesc('updated_at')->get()->map(function ($thread) {
+        $conversations = Conversation::query()->where('user_id', auth()->id())->orderByDesc('updated_at')->get()->map(function ($conversation) {
             return [
-                'id' => $thread->id,
-                'title' => $thread->title,
-                'updatedAtDiff' => $thread->updated_at->diffForHumans(),
+                'id' => $conversation->id,
+                'title' => $conversation->title,
+                'updatedAtDiff' => $conversation->updated_at->diffForHumans(),
             ];
         });
 
         return Inertia::render('Conversations/Index', [
-            'threads' => $threads,
+            'conversations' => $conversations,
         ]);
     }
 
-    public function createThread(Request $request)
+    public function createConversation(Request $request)
     {
-        $thread = $request->user()->threads()->create([
+        $conversation = $request->user()->conversations()->create([
             'title' => 'Sans titre',
         ]);
 
-        return redirect()->route('threads.show', ['threadId' => $thread->id]);
+        return redirect()->route('conversations.show', ['conversationId' => $conversation->id]);
     }
 
-    public function showThread(int $threadId)
+    public function showConversation(int $conversationId)
     {
-        $thread = Thread::findOrFail($threadId);
-        $thread->load('messages');
+        $this->authorize('view', Conversation::findOrFail($conversationId));
+        $conversation = Conversation::findOrFail($conversationId);
+        $conversation->load('messages');
         $models = AIModels::toArray();
 
         $selectedModel = session('selectedModel', AIModels::NeuralHermes);
 
         return Inertia::render('Conversations/Show', [
-            'thread' => $thread,
+            'conversation' => $conversation,
             'models' => $models,
             'selectedModel' => $selectedModel->value,
         ]);
     }
 
-    public function updateThreadTitle(int $threadId)
+    public function updateConversationTitle(int $conversationId)
     {
-        $thread = Thread::findOrFail($threadId);
+        $conversation = Conversation::findOrFail($conversationId);
+
+        $this->authorize('update', $conversation);
 
         $model = AIModels::Mistral;
-        if ($thread->token_count > AIModels::toArray()[AIModels::Mistral->value]['maxTokens']) {
+        if ($conversation->token_count > AIModels::toArray()[AIModels::Mistral->value]['maxTokens']) {
             $model = AIModels::Mixtral;
         }
 
-        $title = Chat::title($thread, $model);
+        $title = Chat::title($conversation, $model);
 
-        $thread->update([
+        $conversation->update([
             'title' => $title,
         ]);
     }
 
-    public function sendMessage(int $threadId, Request $request)
+    public function sendMessage(int $conversationId, Request $request)
     {
+        $this->authorize('update', Conversation::findOrFail($conversationId));
+
         $request->validate([
             'prompt' => 'required|string',
         ]);
 
-        $thread = Thread::findOrFail($threadId);
+        $conversation = Conversation::findOrFail($conversationId);
 
-        $thread->messages()->create([
+        $conversation->messages()->create([
             'role' => 'user',
             'body' => $request->input('prompt'),
         ]);
 
-        $thread->touch();
+        $conversation->touch();
     }
 
-    public function answerThread(int $threadId, Request $request)
+    public function answerConversation(int $conversationId, Request $request)
     {
+        $this->authorize('update', Conversation::findOrFail($conversationId));
+
         $request->validate([
             'model' => ['required', 'string', Rule::in(\array_keys(AIModels::toArray()))],
         ]);
 
-        $thread = Thread::findOrFail($threadId);
+        $conversation = Conversation::findOrFail($conversationId);
 
-        Chat::create($thread, AIModels::NeuralHermes);
+        Chat::create($conversation, AIModels::NeuralHermes);
     }
 
-    public function deleteThread(int $threadId)
+    public function deleteConversation(int $conversationId)
     {
-        $thread = Thread::findOrFail($threadId);
+        $conversation = Conversation::findOrFail($conversationId);
 
-        $thread->delete();
+        $this->authorize('delete', $conversation);
 
-        session()->flash('flash.banner', 'Conversation supprimée avec succès.');
+        $title = $conversation->title;
+
+        $conversation->delete();
+
+        session()->flash('flash.banner', "Conversation \"{$title}\" supprimée avec succès.");
     }
 
     public function updateUserSelectedModel(Request $request)

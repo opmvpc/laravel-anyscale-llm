@@ -2,17 +2,17 @@
 
 namespace App\Services\AI;
 
-use App\Models\Thread;
+use App\Models\Conversation;
 use GuzzleHttp\Client;
 use Illuminate\Support\Str;
 use OpenAI\Client as OpenAIClient;
 
 class Chat
 {
-    public static function create(Thread $thread, AIModels $model)
+    public static function create(Conversation $conversation, AIModels $model)
     {
         $date = date('Y-m-d');
-        $userName = $thread->user->name;
+        $userName = $conversation->user->name;
         $userLanguage = app()->getLocale();
 
         $systemPrompt = <<<EOT
@@ -33,7 +33,7 @@ class Chat
                     User Language : {$userLanguage}
                     EOT;
 
-        $userInstructions = $thread->user->instruction;
+        $userInstructions = $conversation->user->instruction;
 
         if ($userInstructions) {
             $personalUserInstructions = $userInstructions?->personal ?? 'No personal instructions provided.';
@@ -59,27 +59,27 @@ class Chat
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt,
                 ],
-                ...$thread->history(),
+                ...$conversation->history(),
             ],
         ]);
 
-        $thread->messages()->create([
+        $conversation->messages()->create([
             'role' => 'assistant',
             'body' => Str::markdown($response['choices'][0]['message']['content']),
         ]);
 
-        $thread->update([
+        $conversation->update([
             'token_count' => $response['usage']['total_tokens'],
         ]);
     }
 
-    public static function title(Thread $thread, AIModels $model)
+    public static function title(Conversation $conversation, AIModels $model)
     {
         if (AIModels::Mixtral !== $model && AIModels::Mistral !== $model) {
             throw new \InvalidArgumentException('Model does not support json mode. Use Mixtral or Mistral instead.');
         }
 
-        $currentTitle = $thread->title;
+        $currentTitle = $conversation->title;
         $userLanguage = app()->getLocale();
 
         $messages = [
@@ -124,7 +124,7 @@ class Chat
 
                 EOT,
             ],
-            ...$thread->history(),
+            ...$conversation->history(),
         ];
 
         $client = self::client();

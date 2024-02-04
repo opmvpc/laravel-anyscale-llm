@@ -8,12 +8,12 @@ use Inertia\Inertia;
 
 class InstructionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $instruction = Auth::user()->instruction;
+        $instruction = $request->user()->instruction;
 
         if (!$instruction) {
-            $instruction = Auth::user()->instruction()->create([
+            $instruction = $request->user()->instruction()->create([
                 'personal' => '',
                 'behavior' => <<<'EOT'
                     - Tu est un modèle de language. Tu es un assistant dont l'utilisateur t'a donné le nom de Maman.

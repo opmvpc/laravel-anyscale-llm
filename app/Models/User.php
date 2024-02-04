@@ -59,9 +59,9 @@ class User extends Authenticatable
         'profile_photo_url',
     ];
 
-    public function threads()
+    public function conversations()
     {
-        return $this->hasMany(Thread::class);
+        return $this->hasMany(Conversation::class);
     }
 
     public function instruction()

@@ -25,15 +25,15 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/threads', [ConversationController::class, 'index'])->name('threads.index');
+    Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
 
-    Route::post('/threads/create', [ConversationController::class, 'createThread'])->name('threads.create');
-    Route::post('/threads/update-title/{threadId}', [ConversationController::class, 'updateThreadTitle'])->name('threads.updateTitle');
-    Route::get('/threads/{threadId}', [ConversationController::class, 'showThread'])->name('threads.show');
-    Route::post('/threads/answer/{threadId}', [ConversationController::class, 'answerThread'])->name('threads.answer');
-    Route::delete('/threads/{threadId}', [ConversationController::class, 'deleteThread'])->name('threads.delete');
+    Route::post('/conversations/create', [ConversationController::class, 'createConversation'])->name('conversations.create');
+    Route::post('/conversations/update-title/{conversationId}', [ConversationController::class, 'updateConversationTitle'])->name('conversations.updateTitle');
+    Route::get('/conversations/{conversationId}', [ConversationController::class, 'showConversation'])->name('conversations.show');
+    Route::post('/conversations/answer/{conversationId}', [ConversationController::class, 'answerConversation'])->name('conversations.answer');
+    Route::delete('/conversations/{conversationId}', [ConversationController::class, 'deleteConversation'])->name('conversations.delete');
 
-    Route::post('/messages/send/{threadId}', [ConversationController::class, 'sendMessage'])->name('messages.send');
+    Route::post('/messages/send/{conversationId}', [ConversationController::class, 'sendMessage'])->name('messages.send');
 
     Route::post('/models/select', [ConversationController::class, 'updateUserSelectedModel'])->name('models.select');
 

@@ -11,7 +11,7 @@ import { Link, useForm } from "@inertiajs/vue3";
 import { computed, onMounted, ref } from "vue";
 
 const props = defineProps({
-    thread: Object,
+    conversation: Object,
     models: Object,
     selectedModel: String,
 });
@@ -23,7 +23,7 @@ const isTokenLimitReached = computed(() => {
     const tokenLimit = props.selectedModel
         ? props.models[props.selectedModel].maxTokens
         : 0;
-    return props.thread.token_count >= tokenLimit * 0.8;
+    return props.conversation.token_count >= tokenLimit * 0.8;
 });
 
 const form = useForm({
@@ -41,35 +41,43 @@ const send = async () => {
         return;
     }
 
-    form.post(route("messages.send", { threadId: props.thread.id }), {
-        errorBag: "prompt",
-        preserveScroll: true,
-        onStart: () => {
-            form.reset();
-        },
-        onSuccess: async () => {
-            scrollChatBox();
-            await answer();
-        },
-    });
+    form.post(
+        route("messages.send", { conversationId: props.conversation.id }),
+        {
+            errorBag: "prompt",
+            preserveScroll: true,
+            onStart: () => {
+                form.reset();
+            },
+            onSuccess: async () => {
+                scrollChatBox();
+                await answer();
+            },
+        }
+    );
 };
 
 const answer = async () => {
     isAnswering.value = true;
     await wait(100);
     scrollChatBox();
-    formAnswer.post(route("threads.answer", { threadId: props.thread.id }), {
-        onBefore: () => {},
-        preserveScroll: true,
-        onSuccess: () => {
-            isAnswering.value = false;
-            scrollChatBox();
-            updateTitle();
-        },
-        onError: () => {
-            isAnswering.value = false;
-        },
-    });
+    formAnswer.post(
+        route("conversations.answer", {
+            conversationId: props.conversation.id,
+        }),
+        {
+            onBefore: () => {},
+            preserveScroll: true,
+            onSuccess: () => {
+                isAnswering.value = false;
+                scrollChatBox();
+                updateTitle();
+            },
+            onError: () => {
+                isAnswering.value = false;
+            },
+        }
+    );
 };
 
 const scrollChatBox = () => {
@@ -90,14 +98,16 @@ const isTitleUpdating = ref(false);
 
 const updateTitle = () => {
     if (
-        (props.thread.messages.length > 1 &&
-            props.thread.messages.length < 7) ||
-        (props.thread.messages.length % 4 === 0 &&
-            props.thread.messages.length > 6)
+        (props.conversation.messages.length > 1 &&
+            props.conversation.messages.length < 7) ||
+        (props.conversation.messages.length % 4 === 0 &&
+            props.conversation.messages.length > 6)
     ) {
         isTitleUpdating.value = true;
         formUpdateTitle.post(
-            route("threads.updateTitle", { threadId: props.thread.id }),
+            route("conversations.updateTitle", {
+                conversationId: props.conversation.id,
+            }),
             {
                 onSuccess: () => {
                     isTitleUpdating.value = false;
@@ -119,7 +129,7 @@ const updateSelectedModel = (value) => {
     formUpdateSelectedModel.model = value;
     formAnswer.model = value;
     formUpdateSelectedModel.post(
-        route("models.select", { threadId: props.thread.id }),
+        route("models.select", { conversationId: props.conversation.id }),
         {
             preserveScroll: true,
             onSuccess: () => {},
@@ -131,7 +141,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 </script>
 
 <template>
-    <AppLayout :title="`${thread.title} - Conversations`">
+    <AppLayout :title="`${conversation.title} - Conversations`">
         <template #header>
             <div class="flex justify-between space-x-6 items-center">
                 <div>
@@ -139,7 +149,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         class="flex space-x-2 items-baseline font-semibold text-xl text-gray-800 leading-tight"
                     >
                         <div>
-                            {{ thread.title }}
+                            {{ conversation.title }}
                         </div>
                         <div>
                             <LoadingIcon
@@ -151,7 +161,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                 </div>
                 <div class="">
                     <Link
-                        :href="route('threads.index')"
+                        :href="route('conversations.index')"
                         class="text-indigo-600 hover:text-indigo-900 transition"
                     >
                         Retour
@@ -175,7 +185,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         <div class="">
                             <ul
                                 class="bg-gray-100 p-4 mt-4 rounded-xl"
-                                v-if="!thread.messages.length"
+                                v-if="!conversation.messages.length"
                             >
                                 <li>
                                     <p>Pas encore de message.</p>
@@ -194,7 +204,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                         'col-span-8 bg-indigo-100':
                                             message.role === 'assistant',
                                     }"
-                                    v-for="message in thread.messages"
+                                    v-for="message in conversation.messages"
                                     :key="message.id"
                                 >
                                     <p class="prose" v-html="message.body"></p>
@@ -244,7 +254,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                     'text-red-600': isTokenLimitReached,
                                 }"
                             >
-                                {{ thread.token_count }} tokens
+                                {{ conversation.token_count }} tokens
                             </div>
                         </div>
                     </div>

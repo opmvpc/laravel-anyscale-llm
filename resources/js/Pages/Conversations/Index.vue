@@ -10,44 +10,47 @@ import { Link, useForm } from "@inertiajs/vue3";
 import { ref } from "vue";
 
 const props = defineProps({
-    threads: Array,
+    conversations: Array,
 });
 
 const form = useForm({
     _method: "POST",
 });
 
-const createThread = () => {
-    form.post(route("threads.create"), {
+const createConversation = () => {
+    form.post(route("conversations.create"), {
         preserveScroll: true,
     });
 };
 
-const formDeleteThread = useForm({
+const formDeleteConversation = useForm({
     _method: "DELETE",
 });
-const confirmingThreadDeletion = ref(false);
-const ThreadIdToDelete = ref(null);
+const confirmingConversationDeletion = ref(false);
+const ConversationIdToDelete = ref(null);
 
-const confirmThreadDeletion = (id) => {
-    ThreadIdToDelete.value = id;
-    confirmingThreadDeletion.value = true;
+const confirmConversationDeletion = (id) => {
+    ConversationIdToDelete.value = id;
+    confirmingConversationDeletion.value = true;
 };
 
-const deleteThread = () => {
-    formDeleteThread.delete(route("threads.delete", ThreadIdToDelete.value), {
-        preserveScroll: true,
-        onSuccess: () => {
-            confirmingThreadDeletion.value = false;
-        },
-        onError: () => {
-            confirmingThreadDeletion.value = false;
-        },
-    });
+const deleteConversation = () => {
+    formDeleteConversation.delete(
+        route("conversations.delete", ConversationIdToDelete.value),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                confirmingConversationDeletion.value = false;
+            },
+            onError: () => {
+                confirmingConversationDeletion.value = false;
+            },
+        }
+    );
 };
 
 const closeModal = () => {
-    confirmingThreadDeletion.value = false;
+    confirmingConversationDeletion.value = false;
 };
 </script>
 
@@ -61,7 +64,7 @@ const closeModal = () => {
 
                 <div class="">
                     <PrimaryButton
-                        @click="createThread"
+                        @click="createConversation"
                         :class="{ 'opacity-25': form.processing }"
                         :disabled="form.processing"
                     >
@@ -83,30 +86,34 @@ const closeModal = () => {
                     </template>
                 </SectionTitle>
                 <div class="mt-5 md:mt-0 md:col-span-2">
-                    <!-- Liste des liens vers les threads -->
+                    <!-- Liste des liens vers les conversations -->
                     <ul
                         class="mt-5 md:mt-0 md:col-span-2 flex flex-col divide-y-2 rounded-xl overflow-hidden shadow"
-                        v-if="threads.length"
+                        v-if="conversations.length"
                     >
                         <li
-                            v-for="thread in threads"
-                            :key="thread.id"
+                            v-for="conversation in conversations"
+                            :key="conversation.id"
                             class="bg-white py-4 px-8 flex hover:bg-indigo-50 transition duration-150 items-center justify-between space-x-4"
                         >
                             <Link
-                                :href="`/threads/${thread.id}`"
+                                :href="`/conversations/${conversation.id}`"
                                 class="grow hover:text-indigo-600 hover:underline transition duration-150 truncate"
-                                :title="thread.title"
+                                :title="conversation.title"
                             >
-                                {{ thread.title }}
+                                {{ conversation.title }}
                             </Link>
                             <div class="flex items-center space-x-4">
                                 <div class="text-xs text-gray-700 text-right">
-                                    {{ thread.updatedAtDiff }}
+                                    {{ conversation.updatedAtDiff }}
                                 </div>
                                 <SecondaryButton
-                                    v-if="threads.length"
-                                    @click="confirmThreadDeletion(thread.id)"
+                                    v-if="conversations.length"
+                                    @click="
+                                        confirmConversationDeletion(
+                                            conversation.id
+                                        )
+                                    "
                                     class="ms-3"
                                 >
                                     <DeleteIcon class="h-5 w-5" />
@@ -115,14 +122,14 @@ const closeModal = () => {
                         </li>
                     </ul>
                     <p class="col-span-3" v-else>
-                        Vous n'avez pas encore de thread.
+                        Vous n'avez pas encore de conversation.
                     </p>
                 </div>
             </div>
         </div>
     </AppLayout>
 
-    <DialogModal :show="confirmingThreadDeletion" @close="closeModal">
+    <DialogModal :show="confirmingConversationDeletion" @close="closeModal">
         <template #title> Supprimer la conversation </template>
 
         <template #content>
@@ -135,9 +142,9 @@ const closeModal = () => {
 
             <DangerButton
                 class="ms-3"
-                :class="{ 'opacity-25': formDeleteThread.processing }"
-                :disabled="formDeleteThread.processing"
-                @click="deleteThread"
+                :class="{ 'opacity-25': formDeleteConversation.processing }"
+                :disabled="formDeleteConversation.processing"
+                @click="deleteConversation"
             >
                 Supprimer
             </DangerButton>

@@ -14,7 +14,7 @@ return new class() extends Migration {
             $table->id();
             $table->text('body');
             $table->enum('role', ['user', 'assistant']);
-            $table->foreignId('thread_id')->constrained()->onDelete('cascade');
+            $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
