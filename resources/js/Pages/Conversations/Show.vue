@@ -197,11 +197,11 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                 class="bg-gray-100 p-4 mt-4 rounded-xl flex flex-col space-y-8 max-h-[50vh] overflow-y-auto"
                             >
                                 <li
-                                    class="w-[80%] p-4 rounded-lg"
+                                    class="max-w-[80%] p-4 rounded-lg"
                                     :class="{
                                         'self-end bg-green-100 text-right':
                                             message.role === 'user',
-                                        'col-span-8 bg-indigo-100':
+                                        'bg-indigo-100':
                                             message.role === 'assistant',
                                     }"
                                     v-for="message in conversation.messages"
