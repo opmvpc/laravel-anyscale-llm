@@ -49,20 +49,23 @@ class InstructionController extends Controller
 
     public function update(Request $request)
     {
-        $request->validate([
-            'personal' => ['missing_with:behavior', 'nullable', 'string', 'max:1500'],
-            'behavior' => ['missing_with:personal', 'string', 'max:1500'],
-        ]);
-
         $instruction = Auth::user()->instruction;
 
         if (null !== $request->input('personal')) {
+            $request->validate([
+                'personal' => ['nullable', 'string', 'max:1500'],
+            ]);
+
             $instruction->update([
                 'personal' => $request->input('personal'),
             ]);
 
             session()->flash('flash.banner', 'Vos informations personnelles ont été mises à jour.');
         } else {
+            $request->validate([
+                'behavior' => ['required', 'string', 'max:1500'],
+            ]);
+
             $instruction->update([
                 'behavior' => $request->input('behavior'),
             ]);
