@@ -119,7 +119,10 @@ class ConversationController extends Controller
             'model' => ['required', 'string', Rule::in(collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
         ]);
 
-        session(['selectedModel' => AIModels::tryFrom(request('model'))]);
-        session()->flash('flash.banner', 'Modèle sélectionné mis à jour avec succès.');
+        $model = AIModels::tryFrom(request('model'));
+        session(['selectedModel' => $model]);
+
+        $modelName = AIModels::toArray()[$model->value]['name'];
+        session()->flash('flash.banner', "Modèle de langage mis à jour avec succès. Nouveau modèle : {$modelName}.");
     }
 }

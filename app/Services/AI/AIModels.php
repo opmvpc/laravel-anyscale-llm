@@ -25,52 +25,52 @@ enum AIModels: string
     {
         return [
             self::NeuralHermes->value => [
-                'name' => 'NeuralHermes 7B',
+                'name' => 'NeuralHermes 7B 16k',
                 'value' => self::NeuralHermes,
                 'maxTokens' => 16384,
             ],
             self::OpenOrca->value => [
-                'name' => 'OpenOrca 7B',
+                'name' => 'OpenOrca 7B 8k',
                 'value' => self::OpenOrca,
                 'maxTokens' => 8192,
             ],
             self::Zephyr->value => [
-                'name' => 'Zephyr 7B',
+                'name' => 'Zephyr 7B 16k',
                 'value' => self::Zephyr,
                 'maxTokens' => 16384,
             ],
             self::Mistral->value => [
-                'name' => 'Mistral 7B',
+                'name' => 'Mistral 7B 16k',
                 'value' => self::Mistral,
                 'maxTokens' => 16384,
             ],
             self::Mixtral->value => [
-                'name' => 'Mixtral 8x7B',
+                'name' => 'Mixtral 8x7B 32k',
                 'value' => self::Mixtral,
                 'maxTokens' => 32768,
             ],
             self::Llama7B->value => [
-                'name' => 'Llama2 7B',
+                'name' => 'Llama2 7B 4k',
                 'value' => self::Llama7B,
                 'maxTokens' => 4096,
             ],
             self::Llama13B->value => [
-                'name' => 'Llama2 13B',
+                'name' => 'Llama2 13B 4k',
                 'value' => self::Llama13B,
                 'maxTokens' => 4096,
             ],
             self::Llama70B->value => [
-                'name' => 'Llama2 70B',
+                'name' => 'Llama2 70B 4k',
                 'value' => self::Llama70B,
                 'maxTokens' => 4096,
             ],
             self::CodeLlama34B->value => [
-                'name' => 'CodeLlama 34B',
+                'name' => 'CodeLlama 34B 16k',
                 'value' => self::CodeLlama34B,
                 'maxTokens' => 16384,
             ],
             self::CodeLlama70B->value => [
-                'name' => 'CodeLlama 70B',
+                'name' => 'CodeLlama 70B 4k',
                 'value' => self::CodeLlama70B,
                 'maxTokens' => 4096,
             ],
