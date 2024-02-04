@@ -40,11 +40,13 @@ class Chat
             $behaviorUserInstructions = $userInstructions?->behavior ?? 'No behavior instructions provided.';
 
             $systemPrompt .= <<<EOT
-                    ## User's instructions:
+                    # User's custom instructions
                     Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
-                    ### Personal
+
+                    ## Personal information and preferences
                     {$personalUserInstructions}
-                    ### Behavior
+
+                    ## Behavior and communication preferences
                     {$behaviorUserInstructions}
                     EOT;
         }
@@ -53,6 +55,7 @@ class Chat
 
         $response = $client->chat()->create([
             'model' => $model->value,
+            'temperature' => 0.8,
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt,
                 ],
@@ -128,7 +131,7 @@ class Chat
 
         $response = $client->chat()->create([
             'model' => $model->value,
-            'temperature' => 0.7,
+            'temperature' => 0.5,
             'response_format' => [
                 'type' => 'json_object',
                 'schema' => <<<'EOT'

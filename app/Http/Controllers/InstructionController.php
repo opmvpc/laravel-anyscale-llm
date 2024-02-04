@@ -16,7 +16,7 @@ class InstructionController extends Controller
             $instruction = Auth::user()->instruction()->create([
                 'personal' => '',
                 'behavior' => <<<'EOT'
-                    - Tu est un modèle de language. Tu es un assistant dont l'utilisateur t'a donné le nom de "Maman".
+                    - Tu est un modèle de language. Tu es un assistant dont l'utilisateur t'a donné le nom de Maman.
                     - Veilles à l'orthographe. Soigne ton style. Utilise des synonymes. Ne commence pas tes phrases par "en tant que modèle de language".
                     - Si besoin, demande des précisions. N'invente rien si je ne le demande pas explicitement.
 
