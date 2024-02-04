@@ -26,7 +26,7 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function createConversation(Request $request)
+    public function create(Request $request)
     {
         $conversation = $request->user()->conversations()->create([
             'title' => 'Sans titre',
@@ -35,7 +35,7 @@ class ConversationController extends Controller
         return redirect()->route('conversations.show', ['conversationId' => $conversation->id]);
     }
 
-    public function showConversation(int $conversationId)
+    public function show(int $conversationId)
     {
         $this->authorize('view', Conversation::findOrFail($conversationId));
         $conversation = Conversation::findOrFail($conversationId);
@@ -51,7 +51,7 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function updateConversationTitle(int $conversationId)
+    public function updateTitle(int $conversationId)
     {
         $conversation = Conversation::findOrFail($conversationId);
 
@@ -69,7 +69,7 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function sendMessage(int $conversationId, Request $request)
+    public function send(int $conversationId, Request $request)
     {
         $this->authorize('update', Conversation::findOrFail($conversationId));
 
@@ -87,7 +87,7 @@ class ConversationController extends Controller
         $conversation->touch();
     }
 
-    public function answerConversation(int $conversationId, Request $request)
+    public function answer(int $conversationId, Request $request)
     {
         $this->authorize('update', Conversation::findOrFail($conversationId));
 
@@ -100,7 +100,7 @@ class ConversationController extends Controller
         Chat::create($conversation, AIModels::NeuralHermes);
     }
 
-    public function deleteConversation(int $conversationId)
+    public function delete(int $conversationId)
     {
         $conversation = Conversation::findOrFail($conversationId);
 

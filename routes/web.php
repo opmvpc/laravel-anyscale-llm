@@ -27,13 +27,13 @@ Route::middleware([
 ])->group(function () {
     Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
 
-    Route::post('/conversations/create', [ConversationController::class, 'createConversation'])->name('conversations.create');
-    Route::post('/conversations/update-title/{conversationId}', [ConversationController::class, 'updateConversationTitle'])->name('conversations.updateTitle');
-    Route::get('/conversations/{conversationId}', [ConversationController::class, 'showConversation'])->name('conversations.show');
-    Route::post('/conversations/answer/{conversationId}', [ConversationController::class, 'answerConversation'])->name('conversations.answer');
-    Route::delete('/conversations/{conversationId}', [ConversationController::class, 'deleteConversation'])->name('conversations.delete');
+    Route::post('/conversations/create', [ConversationController::class, 'create'])->name('conversations.create');
+    Route::post('/conversations/update-title/{conversationId}', [ConversationController::class, 'updateTitle'])->name('conversations.updateTitle');
+    Route::get('/conversations/{conversationId}', [ConversationController::class, 'show'])->name('conversations.show');
+    Route::post('/conversations/answer/{conversationId}', [ConversationController::class, 'answer'])->name('conversations.answer');
+    Route::delete('/conversations/{conversationId}', [ConversationController::class, 'delete'])->name('conversations.delete');
 
-    Route::post('/messages/send/{conversationId}', [ConversationController::class, 'sendMessage'])->name('messages.send');
+    Route::post('/messages/send/{conversationId}', [ConversationController::class, 'send'])->name('messages.send');
 
     Route::post('/models/select', [ConversationController::class, 'updateUserSelectedModel'])->name('models.select');
 
