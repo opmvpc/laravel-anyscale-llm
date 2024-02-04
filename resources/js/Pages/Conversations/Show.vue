@@ -9,6 +9,7 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import LoadingIcon from "@/Components/LoadingIcon.vue";
 import { Link, useForm } from "@inertiajs/vue3";
 import { computed, onMounted, ref } from "vue";
+import ConversationIcon from "@/Components/ConversationIcon.vue";
 
 const props = defineProps({
     conversation: Object,
@@ -97,11 +98,16 @@ const formUpdateTitle = useForm({
 const isTitleUpdating = ref(false);
 
 const updateTitle = () => {
+    // only called after assistant's messagez
     if (
+        // Update title if there are 2 to 3 messages
         (props.conversation.messages.length > 1 &&
-            props.conversation.messages.length < 7) ||
-        (props.conversation.messages.length % 4 === 0 &&
-            props.conversation.messages.length > 6)
+            props.conversation.messages.length < 4) ||
+        // or if the number of messages is a multiple of 4 or 4+1
+        ((props.conversation.messages.length % 4 === 1 ||
+            props.conversation.messages.length % 4 === 0) &&
+            // and number of messages is less than 31
+            props.conversation.messages.length < 31)
     ) {
         isTitleUpdating.value = true;
         formUpdateTitle.post(
@@ -159,13 +165,24 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         </div>
                     </h2>
                 </div>
-                <div class="">
+                <div
+                    class="flex flex-col items-end md:items-center md:flex-row space-y-2 md:space-y-0 md:space-x-6"
+                >
                     <Link
                         :href="route('conversations.index')"
-                        class="text-indigo-600 hover:text-indigo-900 transition"
+                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                        title="Retour à la liste des conversations"
                     >
                         Retour
                     </Link>
+                    <PrimaryButton
+                        @click="createConversation"
+                        :class="{ 'opacity-25': form.processing }"
+                        :disabled="form.processing"
+                        title="Nouvelle conversation"
+                    >
+                        <ConversationIcon class="h-4 w-4" />
+                    </PrimaryButton>
                 </div>
             </div>
         </template>

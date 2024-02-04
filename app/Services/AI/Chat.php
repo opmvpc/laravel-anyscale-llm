@@ -63,9 +63,11 @@ class Chat
             ],
         ]);
 
+        $answer = $response['choices'][0]['message']['content'];
+
         $conversation->messages()->create([
             'role' => 'assistant',
-            'body' => Str::markdown($response['choices'][0]['message']['content']),
+            'body' => Str::markdown($answer),
         ]);
 
         $conversation->update([
@@ -95,8 +97,7 @@ class Chat
                 - Analyze the conversation and generate a title that best describes the conversation.
                 - The title should be written in the language provided in the Information section.
                 - Keep the current title if you cannot generate a better one.
-                - Use the reasoning field to explain why you generated the title.
-                - Your answer should be in the answer field.
+                - Use the reasoning field to explain your thought process.
 
                 ## Information
                 Current title: {$currentTitle}
@@ -170,8 +171,12 @@ class Chat
             'messages' => $messages,
         ]);
 
-        $json = $response['choices'][0]['message']['content'];
-        $data = json_decode($json, true);
+        try {
+            $json = $response['choices'][0]['message']['content'];
+            $data = json_decode($json, true);
+        } catch (\Throwable $th) {
+            throw new \RuntimeException('Failed to parse the response from the AI model.');
+        }
 
         // dump($data);
 

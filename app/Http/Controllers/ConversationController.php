@@ -62,7 +62,11 @@ class ConversationController extends Controller
             $model = AIModels::Mixtral;
         }
 
-        $title = Chat::title($conversation, $model);
+        try {
+            $title = Chat::title($conversation, $model);
+        } catch (\Throwable $th) {
+            $title = $conversation->title;
+        }
 
         $conversation->update([
             'title' => $title,
@@ -97,7 +101,14 @@ class ConversationController extends Controller
 
         $conversation = Conversation::findOrFail($conversationId);
 
-        Chat::create($conversation, AIModels::NeuralHermes);
+        try {
+            Chat::create($conversation, AIModels::NeuralHermes);
+        } catch (\Throwable $th) {
+            $conversation->messages()->create([
+                'role' => 'assistant',
+                'body' => 'Une erreur est survenue lors de la génération de la réponse. Veuillez réessayer.',
+            ]);
+        }
     }
 
     public function delete(int $conversationId)

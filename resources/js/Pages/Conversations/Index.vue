@@ -8,6 +8,7 @@ import AppLayout from "@/Layouts/AppLayout.vue";
 import DeleteIcon from "@/Components/DeleteIcon.vue";
 import { Link, useForm } from "@inertiajs/vue3";
 import { ref } from "vue";
+import ConversationIcon from "@/Components/ConversationIcon.vue";
 
 const props = defineProps({
     conversations: Array,
@@ -67,8 +68,9 @@ const closeModal = () => {
                         @click="createConversation"
                         :class="{ 'opacity-25': form.processing }"
                         :disabled="form.processing"
+                        title="Nouvelle conversation"
                     >
-                        Nouvelle conversation
+                        <ConversationIcon class="h-4 w-4" />
                     </PrimaryButton>
                 </div>
             </div>
