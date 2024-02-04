@@ -54,7 +54,12 @@ class ConversationController extends Controller
     {
         $thread = Thread::findOrFail($threadId);
 
-        $title = Chat::title($thread, AIModels::Mistral);
+        $model = AIModels::Mistral;
+        if ($thread->token_count > AIModels::toArray()[AIModels::Mistral->value]['maxTokens']) {
+            $model = AIModels::Mixtral;
+        }
+
+        $title = Chat::title($thread, $model);
 
         $thread->update([
             'title' => $title,
@@ -80,7 +85,7 @@ class ConversationController extends Controller
     public function answerThread(int $threadId, Request $request)
     {
         $request->validate([
-            'model' => ['required', 'string', Rule::in(collect(AIModels::toArray())->map(fn ($model) => $model['value']->value)->toArray())],
+            'model' => ['required', 'string', Rule::in(\array_keys(AIModels::toArray()))],
         ]);
 
         $thread = Thread::findOrFail($threadId);

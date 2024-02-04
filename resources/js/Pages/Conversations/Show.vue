@@ -8,16 +8,23 @@ import TextareaInput from "@/Components/TextareaInput.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import LoadingIcon from "@/Components/LoadingIcon.vue";
 import { Link, useForm } from "@inertiajs/vue3";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const props = defineProps({
     thread: Object,
-    models: Array,
+    models: Object,
     selectedModel: String,
 });
 
 const isAnswering = ref(false);
 const chatBox = ref(null);
+
+const isTokenLimitReached = computed(() => {
+    const tokenLimit = props.selectedModel
+        ? props.models[props.selectedModel].maxTokens
+        : 0;
+    return props.thread.token_count >= tokenLimit * 0.8;
+});
 
 const form = useForm({
     _method: "POST",
@@ -220,14 +227,26 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                             class="mt-1 block w-full"
                             @keydown.enter.ctrl="send"
                         />
-                        <InputError
-                            :message="form.errors.prompt"
-                            class="mt-2"
-                        />
-                        <InputError
-                            :message="formAnswer.errors.model"
-                            class="mt-2"
-                        />
+                        <div class="flex justify-between items-center mt-2">
+                            <div class="flex flex-col">
+                                <InputError :message="form.errors.prompt" />
+                                <InputError
+                                    :message="formAnswer.errors.model"
+                                />
+                                <InputError
+                                    v-if="isTokenLimitReached"
+                                    message="La limite de token est atteinte."
+                                />
+                            </div>
+                            <div
+                                class="text-xs text-gray-800"
+                                :class="{
+                                    'text-red-600': isTokenLimitReached,
+                                }"
+                            >
+                                {{ thread.token_count }} tokens
+                            </div>
+                        </div>
                     </div>
                 </template>
 
@@ -246,6 +265,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                 :selected="model.value === props.selectedModel"
                             >
                                 {{ model.name }}
+                                {{ Math.round(model.maxTokens / 1000) }}k
                             </option>
                         </select>
                     </div>
@@ -255,9 +275,16 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
                     <PrimaryButton
                         :class="{
-                            'opacity-25': form.processing || isAnswering,
+                            'opacity-25':
+                                form.processing ||
+                                isAnswering ||
+                                isTokenLimitReached,
                         }"
-                        :disabled="form.processing"
+                        :disabled="
+                            form.processing ||
+                            isAnswering ||
+                            isTokenLimitReached
+                        "
                     >
                         Envoyer
                     </PrimaryButton>
