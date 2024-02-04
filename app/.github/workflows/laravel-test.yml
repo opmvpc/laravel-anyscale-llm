@@ -1,0 +1,41 @@
+name: Laravel Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ["8.2", "8.3"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup PHP, with Composer and necessary extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite
+          tools: composer:v2
+
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Setup Application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=:memory:" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          php artisan config:clear
+
+      - name: Run Database Migrations
+        run: php artisan migrate
+
+      - name: Execute Tests
+        run: vendor/bin/phpunit
