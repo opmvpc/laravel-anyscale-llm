@@ -275,7 +275,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                 :selected="model.value === props.selectedModel"
                             >
                                 {{ model.name }}
-                                {{ Math.round(model.maxTokens / 1000) }}k
+                                {{ Math.floor(model.maxTokens / 1000) }}k
                             </option>
                         </select>
                     </div>
