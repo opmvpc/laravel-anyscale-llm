@@ -50,7 +50,6 @@ class AITest extends TestCase
         }
 
         $title = Chat::title($conversation, AIModels::Mixtral);
-        dump($title);
 
         $this->assertIsString($title);
     }
