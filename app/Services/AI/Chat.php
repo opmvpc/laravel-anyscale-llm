@@ -94,39 +94,41 @@ class Chat
 
                 ## Instructions
                 - You are a helpful assistant tasked to generate the best title for a conversation.
-                - Analyze the conversation and generate a title that best describes the conversation.
-                - The title should be written in the language provided in the Information section.
                 - Keep the current title if you cannot generate a better one.
                 - Use the reasoning field to explain your thought process.
+                - The reasoning field should contain 3 to 5 sentences.
+                - The title should be descriptive and summarize the conversation. It should be in the user's language. It should be brief and to the point.
 
                 ## Information
                 Current title: {$currentTitle}
                 User Language: {$userLanguage}
 
                 ## Output format
-                - a json object
+                - a valid json object
+                - Your final answer MUST be in the `title` field of the `answer` object.
+                - NEVER use emojis or special characters.
 
                 ## Example
-                Here is an example of a valid response. The example is generic and should be adapted to the current conversation. To do so, you should replace the placeholder values (eg: [LANG], [SUBJECT], [ACTION], [REASON], [NEW TITLE]) with the correct values to help you reason step by step before generating the title.
+                - Here is an example of a valid response.
+                - The example is generic and should be adapted to the current conversation history.
+                - [LANG], [SUBJECT], [ACTION], [REASON], [TITLE] tags are placeholders.
+                - Explain your reasoning by writing a few sentences. Replace the tags with the actual information. (e.g. French, a conversation about cats, summarize the conversation, the current title is not descriptive, generate a better title)
+                - [TITLE] and should NEVER be used in the final answer.
 
                 ```json
                 {
                     "reasoning": [
-                        "The provided language is [LANG].",
-                        "The conversation is about [SUBJECT].",
-                        "The assistant is trying to [ACTION].",
-                        "But the assistant is not able to [ACTION].",
-                        "The current title is not [REASON].",
-                        "I should [ACTION] to generate a better title.",
-                        "[NEW TITLE] will be a better match!"
+                        "The provided language is [LANG]. The conversation is about [SUBJECT]",
+                        "The assistant is trying to [ACTION] and to [ACTION].",
+                        "The current title is not [REASON]. I should [ACTION] to generate a better title.",
                     ],
                     "answer": {
-                        "language": "[LANG]",
-                        "title": "[NEW TITLE]"
+                        "title": "[TITLE]"
                     }
                 }
                 ```
 
+                end of example
                 EOT,
             ],
             ...$conversation->history(),
@@ -154,10 +156,6 @@ class Chat
                             {
                                 "type": "object",
                                 "properties": {
-                                    "language":
-                                    {
-                                        "type": "string"
-                                    },
                                     "title":
                                     {
                                         "type": "string"

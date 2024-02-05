@@ -24,7 +24,7 @@ const isTokenLimitReached = computed(() => {
     const tokenLimit = props.selectedModel
         ? props.models[props.selectedModel].maxTokens
         : 0;
-    return props.conversation.token_count >= tokenLimit * 0.8;
+    return props.conversation.token_count >= tokenLimit;
 });
 
 const form = useForm({
@@ -38,7 +38,7 @@ const formAnswer = useForm({
 });
 
 const send = async () => {
-    if (isAnswering.value) {
+    if (isTokenLimitReached.value || isAnswering.value || form.processing) {
         return;
     }
 
@@ -54,12 +54,20 @@ const send = async () => {
                 scrollChatBox();
                 await answer();
             },
+            onError: () => {
+                isAnswering.value = false;
+            },
         }
     );
 };
 
 const answer = async () => {
+    if (isTokenLimitReached.value) {
+        return;
+    }
+
     isAnswering.value = true;
+
     await wait(100);
     scrollChatBox();
     formAnswer.post(
