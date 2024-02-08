@@ -95,14 +95,10 @@ class ConversationController extends Controller
     {
         $this->authorize('update', Conversation::findOrFail($conversationId));
 
-        $request->validate([
-            'model' => ['required', 'string', Rule::in(\array_keys(AIModels::toArray()))],
-        ]);
-
         $conversation = Conversation::findOrFail($conversationId);
 
         try {
-            Chat::create($conversation, AIModels::NeuralHermes);
+            Chat::create($conversation, session('selectedModel', AIModels::NeuralHermes));
         } catch (\Throwable $th) {
             $conversation->messages()->create([
                 'role' => 'assistant',
