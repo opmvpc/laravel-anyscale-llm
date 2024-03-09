@@ -11,7 +11,7 @@ class Chat
 {
     public static function create(Conversation $conversation, AIModels $model)
     {
-        $client = self::client();
+        $client = self::client($model);
 
         $response = $client->chat()->create([
             'model' => $model->value,
@@ -37,7 +37,7 @@ class Chat
 
     public static function stream(Conversation $conversation, AIModels $model)
     {
-        $client = self::client();
+        $client = self::client($model);
 
         return $client->chat()->createStreamed([
             'model' => $model->value,
@@ -117,7 +117,7 @@ class Chat
             ...$conversation->history(),
         ];
 
-        $client = self::client();
+        $client = self::client($model);
 
         $response = $client->chat()->create([
             'model' => $model->value,
@@ -207,11 +207,17 @@ class Chat
         return $systemPrompt;
     }
 
-    private static function client(): OpenAIClient
+    private static function client(AIModels $model): OpenAIClient
     {
-        $yourApiKey = config('openai.api_key');
-        $yourOrganization = config('openai.organization');
-        $apiEndpoint = config('openai.api_endpoint');
+        if ('Anyscale' === AIModels::toArray()[$model->value]['provider']) {
+            $yourApiKey = config('openai.api_key');
+            $yourOrganization = config('openai.organization');
+            $apiEndpoint = config('openai.api_endpoint');
+        } if ('Groq' === AIModels::toArray()[$model->value]['provider']) {
+            $yourApiKey = config('openai.groq_api_key');
+            $yourOrganization = config('openai.groq_organization');
+            $apiEndpoint = config('openai.groq_api_endpoint');
+        }
 
         $client = \OpenAI::factory()
             ->withApiKey($yourApiKey)

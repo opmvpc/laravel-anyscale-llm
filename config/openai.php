@@ -15,6 +15,10 @@ return [
     'organization' => env('OPENAI_ORGANIZATION'),
     'api_endpoint' => env('OPENAI_BASE_URL', 'https://api.endpoints.anyscale.com/v1'),
 
+    'groq_api_key' => env('GROQ_API_KEY'),
+    'groq_organization' => env('GROQ_ORGANIZATION'),
+    'groq_api_endpoint' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+
     /*
     |--------------------------------------------------------------------------
     | Request Timeout
