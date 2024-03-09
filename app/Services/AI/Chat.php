@@ -3,6 +3,7 @@
 namespace App\Services\AI;
 
 use App\Models\Conversation;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Str;
 use OpenAI\Client as OpenAIClient;
@@ -178,7 +179,8 @@ class Chat
 
     private static function createSystemPrompt(Conversation $conversation): string
     {
-        $date = date('l, jS \of F Y. H:i:s');
+        $date = Carbon::now('Europe/Brussels')->format('l, jS \of F Y. H:i:s');
+
         $userName = $conversation->user->name;
         $userLanguage = app()->getLocale();
 

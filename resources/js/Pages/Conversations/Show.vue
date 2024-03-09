@@ -357,6 +357,7 @@ const launchExamplePrompt = (prompt) => {
                             type="text"
                             class="mt-1 block w-full"
                             @keydown.enter.ctrl="send"
+                            autofocus
                         />
                         <div class="flex justify-between items-center mt-2">
                             <div class="flex flex-col">

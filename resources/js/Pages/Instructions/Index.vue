@@ -107,6 +107,7 @@ const sendCommands = async () => {
                             type="text"
                             class="mt-1 block w-full h-[40vh]"
                             placeholder="Présentez vous ..."
+                            autofocus
                         />
                         <InputError
                             :message="formPersonal.errors.personal"
