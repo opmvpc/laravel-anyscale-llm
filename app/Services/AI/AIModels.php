@@ -24,6 +24,11 @@ enum AIModels: string
     case GroqMixtral = 'mixtral-8x7b-32768';
     case GroqGemma = 'gemma-7b-it';
 
+    public static function default(): self
+    {
+        return self::GroqMixtral;
+    }
+
     public static function toArray(): array
     {
         return [

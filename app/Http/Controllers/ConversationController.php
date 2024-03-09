@@ -45,7 +45,7 @@ class ConversationController extends Controller
         $conversation->load('messages');
         $models = AIModels::toArray();
 
-        $selectedModel = session('selectedModel', AIModels::NeuralHermes);
+        $selectedModel = session('selectedModel', AIModels::default());
 
         return Inertia::render('Conversations/Show', [
             'conversation' => $conversation,
@@ -104,7 +104,7 @@ class ConversationController extends Controller
 
         NewMessage::dispatch($conversation, $userMessageTokenCount);
 
-        $stream = Chat::stream($conversation, session('selectedModel', AIModels::NeuralHermes));
+        $stream = Chat::stream($conversation, session('selectedModel', AIModels::default()));
 
         $buffer = '';
         $finalBuffer = '';
