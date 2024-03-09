@@ -9,7 +9,7 @@ class Instruction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['personal', 'behavior'];
+    protected $fillable = ['personal', 'behavior', 'commands'];
 
     public function user()
     {

@@ -61,9 +61,9 @@ class InstructionController extends Controller
             ]);
 
             session()->flash('flash.banner', 'Vos informations personnelles ont été mises à jour.');
-        } else {
+        } elseif (null !== $request->input('behavior')) {
             $request->validate([
-                'behavior' => ['required', 'string', 'max:1500'],
+                'behavior' => ['nullable', 'string', 'max:1500'],
             ]);
 
             $instruction->update([
@@ -71,6 +71,16 @@ class InstructionController extends Controller
             ]);
 
             session()->flash('flash.banner', 'Vos instructions comportementales ont été mises à jour.');
+        } elseif (null !== $request->input('commands')) {
+            $request->validate([
+                'commands' => ['nullable', 'string', 'max:1500'],
+            ]);
+
+            $instruction->update([
+                'commands' => $request->input('commands'),
+            ]);
+
+            session()->flash('flash.banner', 'Vos commandes ont été mises à jour.');
         }
     }
 }

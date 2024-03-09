@@ -205,16 +205,21 @@ class Chat
         if ($userInstructions) {
             $personalUserInstructions = $userInstructions?->personal ?? 'No personal instructions provided.';
             $behaviorUserInstructions = $userInstructions?->behavior ?? 'No behavior instructions provided.';
+            $commandsUserInstructions = $userInstructions?->commands ?? 'No commands provided.';
 
             $systemPrompt .= <<<EOT
                     # User's custom instructions
                     Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
+                    Commands are user-defined shortcuts. User will use these commands to instruct the assistant to perform specific tasks.
 
                     ## Personal information and preferences
                     {$personalUserInstructions}
 
                     ## Behavior and communication preferences
                     {$behaviorUserInstructions}
+
+                    ## Commands
+                    {$commandsUserInstructions}
                     EOT;
         }
 

@@ -22,6 +22,11 @@ const formBehavior = useForm({
     behavior: props.instruction.behavior,
 });
 
+const formCommands = useForm({
+    _method: "POST",
+    commands: props.instruction.commands,
+});
+
 const sendPersonal = async () => {
     formPersonal.post(route("instructions.update"), {
         errorBag: "personal",
@@ -33,6 +38,14 @@ const sendPersonal = async () => {
 const sendBehavior = async () => {
     formBehavior.post(route("instructions.update"), {
         errorBag: "behavior",
+        preserveScroll: true,
+        onSuccess: async () => {},
+    });
+};
+
+const sendCommands = async () => {
+    formCommands.post(route("instructions.update"), {
+        errorBag: "commands",
         preserveScroll: true,
         onSuccess: async () => {},
     });
@@ -49,22 +62,50 @@ const sendBehavior = async () => {
 
         <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
             <FormSection @submitted="sendPersonal">
-                <template #title> Informations Personnelles </template>
+                <template #title> À propos de vous </template>
 
                 <template #description>
-                    Que voudriez-vous que l'assistant sache sur vous pour vous
-                    fournir de meilleures réponses à vos questions ?
+                    <p>
+                        Présentez-vous brièvement pour personnaliser
+                        l'interaction avec votre assistant.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="p-4 bg-indigo-100 rounded-lg">
+                            <h3 class="text-base font-medium text-indigo-900">
+                                Idées :
+                            </h3>
+                            <ul
+                                class="text-sm text-indigo-800 mt-2 list-disc pl-5 space-y-1"
+                            >
+                                <li>Qui êtes-vous?</li>
+                                <li>Votre domaine d'expertise</li>
+                            </ul>
+                            <p
+                                class="mt-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded-md"
+                            >
+                                Exemple :
+                                <span class="italic"
+                                    >"Je suis prof de langue, intégrant des jeux
+                                    de rôles et des technologies interactives
+                                    dans mes cours, ce qui permet d'aborder la
+                                    langue de manière dynamique et engageante,
+                                    encouragent l'expression et la compréhension
+                                    orale."</span
+                                >
+                            </p>
+                        </div>
+                    </div>
                 </template>
 
                 <template #form>
-                    <div class="col-span-12">
+                    <div class="col-span-12 h-full">
                         <InputLabel for="personnal" value="Informations" />
                         <TextareaInput
-                            rows="10"
                             id="personal"
                             v-model="formPersonal.personal"
                             type="text"
-                            class="mt-1 block w-full"
+                            class="mt-1 block w-full h-[40vh]"
                             placeholder="Présentez vous ..."
                         />
                         <InputError
@@ -96,23 +137,61 @@ const sendBehavior = async () => {
 
         <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
             <FormSection @submitted="sendBehavior">
-                <template #title> Comportement </template>
+                <template #title> Comportement de l'assistant </template>
 
                 <template #description>
-                    Comment voudriez-vous que l'assistant réagisse à vos
-                    questions ? Donnez lui des instructions à respecter dans
-                    toutes vos conversations.
+                    <p>
+                        Définissez comment vous souhaitez que l'assistant
+                        interagisse avec vous. Cela inclut le ton, le niveau de
+                        détail des réponses, et tout autre préférence qui rendra
+                        l'utilisation de l'assistant plus naturelle et conforme
+                        à vos attentes.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="p-4 bg-indigo-100 rounded-lg">
+                            <h3 class="text-base font-medium text-indigo-900">
+                                Suggestions :
+                            </h3>
+                            <ul
+                                class="text-sm text-indigo-800 mt-2 list-disc pl-5 space-y-1"
+                            >
+                                <li>
+                                    Préférence de ton (amical, formel, etc.)
+                                </li>
+                                <li>
+                                    Format des réponses (listes, paragraphes
+                                    détaillés, etc.)
+                                </li>
+                                <li>
+                                    Approches spécifiques pour expliquer des
+                                    concepts
+                                </li>
+                            </ul>
+                            <p
+                                class="mt-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded-md"
+                            >
+                                Exemple :
+                                <span class="italic"
+                                    >"Je préfère un ton décontracté. Pour les
+                                    sujets techniques, utilisez des exemples
+                                    pratiques pour clarifier les concepts.
+                                    J'aime les résumés suivis de détails si
+                                    nécessaire."</span
+                                >
+                            </p>
+                        </div>
+                    </div>
                 </template>
 
                 <template #form>
                     <div class="col-span-12">
                         <InputLabel for="behavior" value="Instructions" />
                         <TextareaInput
-                            rows="10"
                             id="behavior"
                             v-model="formBehavior.behavior"
                             type="text"
-                            class="mt-1 block w-full"
+                            class="mt-1 block w-full h-[40vh]"
                         />
                         <InputError
                             :message="formBehavior.errors.behavior"
@@ -134,6 +213,86 @@ const sendBehavior = async () => {
                             'opacity-25': formBehavior.processing,
                         }"
                         :disabled="formBehavior.processing"
+                    >
+                        Envoyer
+                    </PrimaryButton>
+                </template>
+            </FormSection>
+        </div>
+
+        <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
+            <FormSection @submitted="sendCommands">
+                <template #title> Créer des commandes personnalisées </template>
+
+                <template #description>
+                    <p>
+                        Ici, vous pouvez définir vos propres commandes pour
+                        interagir de manière unique avec votre assistant. Les
+                        commandes vous permettent de simplifier les actions
+                        récurrentes ou de personnaliser vos interactions.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="p-4 bg-indigo-100 rounded-lg">
+                            <h3 class="text-base font-medium text-indigo-900">
+                                Comment ça marche ?
+                            </h3>
+                            <ul
+                                class="text-sm text-indigo-800 mt-2 list-disc pl-5 space-y-1"
+                            >
+                                <li>
+                                    Commencez chaque commande par '/' suivi du
+                                    nom de la commande.
+                                </li>
+                                <li>
+                                    Expliquez clairement l'action souhaitée
+                                    après le nom de la commande.
+                                </li>
+                            </ul>
+                            <p
+                                class="mt-4 text-sm text-indigo-600 bg-indigo-50 p-3 rounded-md"
+                            >
+                                Exemple :
+                                <span class="italic">
+                                    Créez une commande "/resume" pour demander
+                                    un résumé du texte précédent. Incluez dans
+                                    la description : "Résume le texte fourni ou
+                                    précédent en points clés."
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+                <template #form>
+                    <div class="col-span-12">
+                        <InputLabel for="behavior" value="Commandes" />
+                        <TextareaInput
+                            id="behavior"
+                            v-model="formCommands.commands"
+                            type="text"
+                            class="mt-1 block w-full h-[40vh]"
+                        />
+                        <InputError
+                            :message="formCommands.errors.commands"
+                            class="mt-2"
+                        />
+                    </div>
+                </template>
+
+                <template #actions>
+                    <ActionMessage
+                        :on="formCommands.recentlySuccessful"
+                        class="me-3"
+                    >
+                        Enregistré.
+                    </ActionMessage>
+
+                    <PrimaryButton
+                        :class="{
+                            'opacity-25': formCommands.processing,
+                        }"
+                        :disabled="formCommands.processing"
                     >
                         Envoyer
                     </PrimaryButton>

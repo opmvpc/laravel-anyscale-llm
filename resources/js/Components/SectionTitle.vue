@@ -10,7 +10,7 @@
             </p>
         </div>
 
-        <div class="px-4 sm:px-0">
+        <div class="px-4 sm:px-0" v-if="$slots.aside">
             <slot name="aside" />
         </div>
     </div>
