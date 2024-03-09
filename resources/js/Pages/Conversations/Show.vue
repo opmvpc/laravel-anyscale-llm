@@ -47,6 +47,7 @@ const send = async () => {
     }
 
     const prompt = form.prompt;
+    isAnswering.value = true;
 
     form.post(
         route("messages.send", { conversationId: props.conversation.id }),
@@ -61,9 +62,9 @@ const send = async () => {
                     role: "user",
                     body: prompt,
                 });
-                await wait(100);
+                await wait(1);
                 scrollChatBox();
-                await answer();
+                answer();
             },
             onError: () => {
                 isAnswering.value = false;
@@ -77,10 +78,15 @@ const answer = async () => {
         return;
     }
 
-    isAnswering.value = true;
+    assistantMessage = reactive({
+        role: "assistant",
+        body: "",
+    });
+    messages.push(assistantMessage);
 
-    await wait(100);
+    await wait(1);
     scrollChatBox();
+
     // transform the form call below to a axios call
     axios
         .post(
@@ -105,11 +111,6 @@ const scrollChatBox = () => {
 Echo.private(`conversations.${props.conversation.id}`)
     .listen("NewMessage", (e) => {
         tokenCount.value += e.tokenCount;
-        assistantMessage = reactive({
-            role: "assistant",
-            body: "",
-        });
-        messages.push(assistantMessage);
     })
     .listen("StreamText", (e) => {
         scrollChatBox();
@@ -286,6 +287,19 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                                 : "Moi"
                                         }}</span
                                     >
+                                </li>
+                                <li
+                                    v-show="
+                                        isAnswering &&
+                                        assistantMessage &&
+                                        assistantMessage.body.length === 0
+                                    "
+                                    class="max-w-[80%] p-4 rounded-lg bg-indigo-100"
+                                >
+                                    <p class="text-indigo-900">Assistant</p>
+                                    <LoadingIcon
+                                        class="w-5 h-5 animate-spin text-indigo-900"
+                                    />
                                 </li>
                             </ul>
                         </div>
