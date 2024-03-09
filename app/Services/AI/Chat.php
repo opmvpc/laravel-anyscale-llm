@@ -81,6 +81,9 @@ class Chat
                 - Keep the current title if you cannot generate a better one.
                 - Use the reasoning field to explain your thought process.
                 - The reasoning field should contain 3 to 5 sentences.
+                - Take the whole conversation into account when generating the title.
+                - Conversation can have multiple subjects, but the title should be about the main subject.
+                - Title should not contain the word "Conversation".
                 - The title should be descriptive and summarize the conversation. It should be in the user's language. It should be brief and to the point.
 
                 ## Information
@@ -91,6 +94,7 @@ class Chat
                 - you MUST provide VALID JSON output.
                 - Your final answer MUST be in the `title` field of the `answer` object.
                 - NEVER use emojis or special characters.
+                - The title SHOULD BE MAX 5 words long.
 
                 ## Example
                 - Here is an example of a valid response.
@@ -163,7 +167,7 @@ class Chat
                 throw new \RuntimeException('Failed to parse the response from the AI model.');
             }
             ++$tries;
-        } while ($tries < 3 && empty($data['answer']['title']));
+        } while ($tries < 5 && empty($data['answer']['title']));
 
         if (empty($data['answer']['title'])) {
             return $currentTitle;
@@ -184,22 +188,20 @@ class Chat
         $userName = $conversation->user->name;
         $userLanguage = app()->getLocale();
 
-        $systemPrompt = <<<EOT
+        $systemPrompt = <<<'EOT'
                     # Helpful Assistant
 
                     ## Instructions
                     - You are a helpful assistant that is trying to help a user with a problem.
                     - Respond to the user's messages in a helpful and informative way.
-                    - Answer in the language that the user is speaking to you in.
-                    - Use emojis to express emotions and friendly behavior.
+                    - Answer in the user's language.
+                    - Add emojis to express emotions and friendly behavior.
+                    - Fullfill the user's requests and provide the best answer possible.
+                    - Don't present yourself if the user didn't say hello first.
+                    - Don't talk about yourself unless the user asks you to.
+                    - Don't list your commands unless the user asks you to.
 
-                    ## Output format
-                    - Use Github flavored Markdown to format your messages. (Titles, Lists, Emphasis, Links, Tables, CodeBlocks ...)
 
-                    ## Information
-                    Today's date is : {$date}
-                    User's name is : {$userName}
-                    User Language : {$userLanguage}
                     EOT;
 
         $userInstructions = $conversation->user->instruction;
@@ -211,8 +213,9 @@ class Chat
 
             $systemPrompt .= <<<EOT
                     # User's custom instructions
-                    Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
+                    Here are custom instructions from the user. you must follow them to provide the best answer possible.
                     Commands are user-defined shortcuts. User will use these commands to instruct the assistant to perform specific tasks.
+                    Sometimes, custom instructions or commands will go against the default instructions. In this case, you should follow the custom instructions. User is always right.
 
                     ## Personal information and preferences
                     {$personalUserInstructions}
@@ -224,6 +227,16 @@ class Chat
                     {$commandsUserInstructions}
                     EOT;
         }
+
+        $systemPrompt .= <<<EOT
+                    ## Output format
+                    - Use Github flavored Markdown to format your messages. (Titles, Lists, Emphasis, Links, Tables, CodeBlocks ...)
+
+                    ## Information
+                    Today's date is : {$date}
+                    User's name is : {$userName}
+                    User Language : {$userLanguage}
+                    EOT;
 
         return $systemPrompt;
     }

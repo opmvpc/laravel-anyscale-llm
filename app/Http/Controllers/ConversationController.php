@@ -117,8 +117,8 @@ class ConversationController extends Controller
                 $finalBuffer .= $text;
             }
 
-            // Générer un intervalle aléatoire entre 15 et 40 ms
-            $randomInterval = rand(15000, 40000); // us (microsecondes)
+            // Générer un intervalle aléatoire entre 50 et 100 ms
+            $randomInterval = rand(75000, 125000); // us (microsecondes)
 
             // Vérifier si l'intervalle aléatoire s'est écoulé
             if ((microtime(true) - $lastSendTime) >= ($randomInterval / 1000000.0)) {
