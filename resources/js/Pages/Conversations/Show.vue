@@ -27,10 +27,10 @@ const tokenCount = ref(
 );
 const title = ref(props.conversation.title);
 let messages = reactive(props.conversation.messages);
-let assistantMessage = {
+let assistantMessage = ref({
     role: "assistant",
     body: "",
-};
+});
 
 const isTokenLimitReached = computed(() => {
     const tokenLimit = props.selectedModel
@@ -65,7 +65,7 @@ const send = async () => {
                     body: prompt,
                 });
 
-                messages.push(assistantMessage);
+                messages.push(assistantMessage.value);
                 isAnswering.value = true;
 
                 await wait(2);
@@ -112,10 +112,10 @@ Echo.private(`conversations.${props.conversation.id}`)
     })
     .listen("StreamText", (e) => {
         scrollChatBox();
-        assistantMessage.body += e.text;
+        assistantMessage.value.body += e.text;
     })
     .listen("StopMessage", async (e) => {
-        assistantMessage = {
+        assistantMessage.value = {
             role: "assistant",
             body: "",
         };
