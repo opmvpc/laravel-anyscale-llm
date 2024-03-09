@@ -27,7 +27,7 @@ Route::middleware([
 ])->group(function () {
     Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
 
-    Route::post('/conversations/create', [ConversationController::class, 'create'])->name('conversations.create');
+    Route::get('/conversations/create', [ConversationController::class, 'create'])->name('conversations.create');
     Route::post('/conversations/update-title/{conversationId}', [ConversationController::class, 'updateTitle'])->name('conversations.updateTitle');
     Route::get('/conversations/{conversationId}', [ConversationController::class, 'show'])->name('conversations.show');
     Route::post('/conversations/answer/{conversationId}', [ConversationController::class, 'answer'])->name('conversations.answer');

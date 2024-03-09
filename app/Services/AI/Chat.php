@@ -11,53 +11,13 @@ class Chat
 {
     public static function create(Conversation $conversation, AIModels $model)
     {
-        $date = date('Y-m-d');
-        $userName = $conversation->user->name;
-        $userLanguage = app()->getLocale();
-
-        $systemPrompt = <<<EOT
-                    # Helpful Assistant
-
-                    ## Instructions
-                    - You are a helpful assistant that is trying to help a user with a problem.
-                    - Respond to the user's messages in a helpful and informative way.
-                    - Answer in the language that the user is speaking to you in.
-                    - Use emojis to express emotions and friendly behavior.
-
-                    ## Output format
-                    - Use Markdown to format your messages.
-
-                    ## Information
-                    Today's date is : {$date}
-                    User's name is : {$userName}
-                    User Language : {$userLanguage}
-                    EOT;
-
-        $userInstructions = $conversation->user->instruction;
-
-        if ($userInstructions) {
-            $personalUserInstructions = $userInstructions?->personal ?? 'No personal instructions provided.';
-            $behaviorUserInstructions = $userInstructions?->behavior ?? 'No behavior instructions provided.';
-
-            $systemPrompt .= <<<EOT
-                    # User's custom instructions
-                    Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
-
-                    ## Personal information and preferences
-                    {$personalUserInstructions}
-
-                    ## Behavior and communication preferences
-                    {$behaviorUserInstructions}
-                    EOT;
-        }
-
         $client = self::client();
 
         $response = $client->chat()->create([
             'model' => $model->value,
             'temperature' => 0.8,
             'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt,
+                ['role' => 'system', 'content' => self::createSystemPrompt($conversation),
                 ],
                 ...$conversation->history(),
             ],
@@ -73,6 +33,29 @@ class Chat
         $conversation->update([
             'token_count' => $response['usage']['total_tokens'],
         ]);
+    }
+
+    public static function stream(Conversation $conversation, AIModels $model)
+    {
+        $client = self::client();
+
+        return $client->chat()->createStreamed([
+            'model' => $model->value,
+            'temperature' => 0.8,
+            'stream' => true,
+            'messages' => [
+                ['role' => 'system', 'content' => self::createSystemPrompt($conversation),
+                ],
+                ...$conversation->history(),
+            ],
+        ]);
+    }
+
+    public static function systemPrompTokenCount(Conversation $conversation): int
+    {
+        $systemPrompt = self::createSystemPrompt($conversation);
+
+        return \ceil(\mb_strlen($systemPrompt) / 3);
     }
 
     public static function title(Conversation $conversation, AIModels $model)
@@ -176,9 +159,52 @@ class Chat
             throw new \RuntimeException('Failed to parse the response from the AI model.');
         }
 
-        // dump($data);
-
         return $data['answer']['title'] ?? $currentTitle;
+    }
+
+    private static function createSystemPrompt(Conversation $conversation): string
+    {
+        $date = date('Y-m-d');
+        $userName = $conversation->user->name;
+        $userLanguage = app()->getLocale();
+
+        $systemPrompt = <<<EOT
+                    # Helpful Assistant
+
+                    ## Instructions
+                    - You are a helpful assistant that is trying to help a user with a problem.
+                    - Respond to the user's messages in a helpful and informative way.
+                    - Answer in the language that the user is speaking to you in.
+                    - Use emojis to express emotions and friendly behavior.
+
+                    ## Output format
+                    - Use Markdown to format your messages.
+
+                    ## Information
+                    Today's date is : {$date}
+                    User's name is : {$userName}
+                    User Language : {$userLanguage}
+                    EOT;
+
+        $userInstructions = $conversation->user->instruction;
+
+        if ($userInstructions) {
+            $personalUserInstructions = $userInstructions?->personal ?? 'No personal instructions provided.';
+            $behaviorUserInstructions = $userInstructions?->behavior ?? 'No behavior instructions provided.';
+
+            $systemPrompt .= <<<EOT
+                    # User's custom instructions
+                    Here are custom instructions from the user. YOU MUST FOLLOW THEM to provide the best answer possible.
+
+                    ## Personal information and preferences
+                    {$personalUserInstructions}
+
+                    ## Behavior and communication preferences
+                    {$behaviorUserInstructions}
+                    EOT;
+        }
+
+        return $systemPrompt;
     }
 
     private static function client(): OpenAIClient

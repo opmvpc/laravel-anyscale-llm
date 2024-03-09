@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewConversationTitle;
+use App\Events\NewMessage;
+use App\Events\StopMessage;
+use App\Events\StreamText;
 use App\Models\Conversation;
 use App\Services\AI\AIModels;
 use App\Services\AI\Chat;
@@ -48,6 +52,7 @@ class ConversationController extends Controller
             'conversation' => $conversation,
             'models' => $models,
             'selectedModel' => $selectedModel->value,
+            'systemPromptTokenCount' => Chat::systemPrompTokenCount($conversation),
         ]);
     }
 
@@ -68,9 +73,15 @@ class ConversationController extends Controller
             $title = $conversation->title;
         }
 
+        // if title starts or ends with ", remove them
+        $title = \preg_replace('/^"/', '', $title);
+        $title = \preg_replace('/"$/', '', $title);
+
         $conversation->update([
             'title' => $title,
         ]);
+
+        NewConversationTitle::dispatch($conversation, $title);
     }
 
     public function send(int $conversationId, Request $request)
@@ -91,20 +102,43 @@ class ConversationController extends Controller
         $conversation->touch();
     }
 
-    public function answer(int $conversationId, Request $request)
+    public function answer(int $conversationId)
     {
         $this->authorize('update', Conversation::findOrFail($conversationId));
 
         $conversation = Conversation::findOrFail($conversationId);
 
-        try {
-            Chat::create($conversation, session('selectedModel', AIModels::NeuralHermes));
-        } catch (\Throwable $th) {
-            $conversation->messages()->create([
-                'role' => 'assistant',
-                'body' => 'Une erreur est survenue lors de la génération de la réponse. Veuillez réessayer.',
-            ]);
+        $userMessageTokenCount = \ceil(\mb_strlen($conversation->messages()->latest()->first()->body) / 3);
+
+        NewMessage::dispatch($conversation, $userMessageTokenCount);
+
+        $stream = Chat::stream($conversation, session('selectedModel', AIModels::NeuralHermes));
+
+        $buffer = '';
+        foreach ($stream as $response) {
+            if (isset($response->choices[0]->toArray()['delta']['finish_reason'])) {
+                break;
+            }
+
+            if (isset($response->choices[0]->toArray()['delta']['content'])) {
+                $text = $response->choices[0]->toArray()['delta']['content'];
+                StreamText::dispatch($conversation, $text);
+                $buffer .= $text;
+            }
         }
+
+        $tokenCount = \ceil(\mb_strlen($buffer) / 3);
+
+        StopMessage::dispatch($conversation, $tokenCount);
+
+        $conversation->messages()->create([
+            'role' => 'assistant',
+            'body' => $buffer,
+        ]);
+
+        $conversation->update([
+            'token_count' => $conversation->token_count + $tokenCount,
+        ]);
     }
 
     public function delete(int $conversationId)

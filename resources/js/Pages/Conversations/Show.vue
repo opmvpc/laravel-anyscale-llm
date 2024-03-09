@@ -8,23 +8,32 @@ import TextareaInput from "@/Components/TextareaInput.vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import LoadingIcon from "@/Components/LoadingIcon.vue";
 import { Link, useForm } from "@inertiajs/vue3";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, reactive, watch } from "vue";
 import ConversationIcon from "@/Components/ConversationIcon.vue";
+import { markdownIt } from "@/markdownit";
 
 const props = defineProps({
     conversation: Object,
     models: Object,
     selectedModel: String,
+    systemPromptTokenCount: Number,
 });
 
 const isAnswering = ref(false);
 const chatBox = ref(null);
+const selectedModel = ref(props.selectedModel);
+const tokenCount = ref(
+    props.conversation.token_count + props.systemPromptTokenCount
+);
+const title = ref(props.conversation.title);
+let messages = reactive(props.conversation.messages);
+let assistantMessage = null;
 
 const isTokenLimitReached = computed(() => {
     const tokenLimit = props.selectedModel
         ? props.models[props.selectedModel].maxTokens
         : 0;
-    return props.conversation.token_count >= tokenLimit;
+    return tokenCount >= tokenLimit;
 });
 
 const form = useForm({
@@ -32,15 +41,12 @@ const form = useForm({
     prompt: "",
 });
 
-const formAnswer = useForm({
-    _method: "POST",
-    model: props.selectedModel,
-});
-
 const send = async () => {
     if (isTokenLimitReached.value || isAnswering.value || form.processing) {
         return;
     }
+
+    const prompt = form.prompt;
 
     form.post(
         route("messages.send", { conversationId: props.conversation.id }),
@@ -51,6 +57,11 @@ const send = async () => {
                 form.reset();
             },
             onSuccess: async () => {
+                messages.push({
+                    role: "user",
+                    body: prompt,
+                });
+                await wait(100);
                 scrollChatBox();
                 await answer();
             },
@@ -70,23 +81,19 @@ const answer = async () => {
 
     await wait(100);
     scrollChatBox();
-    formAnswer.post(
-        route("conversations.answer", {
-            conversationId: props.conversation.id,
-        }),
-        {
-            onBefore: () => {},
-            preserveScroll: true,
-            onSuccess: () => {
-                isAnswering.value = false;
-                scrollChatBox();
-                updateTitle();
-            },
-            onError: () => {
-                isAnswering.value = false;
-            },
-        }
-    );
+    // transform the form call below to a axios call
+    axios
+        .post(
+            route("conversations.answer", {
+                conversationId: props.conversation.id,
+            })
+        )
+        .then((response) => {
+            isAnswering.value = false;
+        })
+        .catch((error) => {
+            isAnswering.value = false;
+        });
 };
 
 const scrollChatBox = () => {
@@ -95,22 +102,30 @@ const scrollChatBox = () => {
     }
 };
 
-const formCreateConversation = useForm({
-    _method: "POST",
-});
-
-const createConversation = () => {
-    formCreateConversation.post(route("conversations.create"), {
-        preserveScroll: true,
+Echo.private(`conversations.${props.conversation.id}`)
+    .listen("NewMessage", (e) => {
+        tokenCount.value += e.tokenCount;
+        assistantMessage = reactive({
+            role: "assistant",
+            body: "",
+        });
+        messages.push(assistantMessage);
+    })
+    .listen("StreamText", (e) => {
+        scrollChatBox();
+        assistantMessage.body += e.text;
+    })
+    .listen("StopMessage", (e) => {
+        assistantMessage = null;
+        tokenCount.value += e.tokenCount;
+        updateTitle();
+    })
+    .listen("NewConversationTitle", (e) => {
+        title.value = e.title;
     });
-};
 
 onMounted(() => {
     scrollChatBox();
-});
-
-const formUpdateTitle = useForm({
-    _method: "POST",
 });
 
 const isTitleUpdating = ref(false);
@@ -128,19 +143,22 @@ const updateTitle = () => {
             props.conversation.messages.length < 31)
     ) {
         isTitleUpdating.value = true;
-        formUpdateTitle.post(
-            route("conversations.updateTitle", {
-                conversationId: props.conversation.id,
-            }),
-            {
-                onSuccess: () => {
-                    isTitleUpdating.value = false;
-                },
-                onError: () => {
-                    isTitleUpdating.value = false;
-                },
-            }
-        );
+
+        // transform the form call below to a axios call
+        axios
+            .post(
+                route("conversations.updateTitle", {
+                    conversationId: props.conversation.id,
+                })
+            )
+            .then((response) => {
+                console.log(response.data);
+                isTitleUpdating.value = false;
+            })
+            .catch((error) => {
+                console.log(error.response.data);
+                isTitleUpdating.value = false;
+            });
     }
 };
 
@@ -151,7 +169,7 @@ const formUpdateSelectedModel = useForm({
 
 const updateSelectedModel = (value) => {
     formUpdateSelectedModel.model = value;
-    formAnswer.model = value;
+    selectedModel.value = value;
     formUpdateSelectedModel.post(
         route("models.select", { conversationId: props.conversation.id }),
         {
@@ -173,7 +191,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         class="flex space-x-2 items-baseline font-semibold text-xl text-gray-800 leading-tight"
                     >
                         <div>
-                            {{ conversation.title }}
+                            {{ title }}
                         </div>
                         <div>
                             <LoadingIcon
@@ -193,16 +211,13 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                     >
                         Retour
                     </Link>
-                    <PrimaryButton
-                        @click="createConversation"
-                        :class="{
-                            'opacity-25': formCreateConversation.processing,
-                        }"
-                        :disabled="formCreateConversation.processing"
+                    <Link
+                        class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                        :href="route('conversations.create')"
                         title="Nouvelle conversation"
                     >
                         <ConversationIcon class="h-4 w-4" />
-                    </PrimaryButton>
+                    </Link>
                 </div>
             </div>
         </template>
@@ -222,7 +237,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         <div class="">
                             <ul
                                 class="bg-gray-100 p-4 mt-4 rounded-xl"
-                                v-if="!conversation.messages.length"
+                                v-if="!messages || !messages.length"
                             >
                                 <li>
                                     <p>Pas encore de message.</p>
@@ -238,28 +253,40 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                     :class="{
                                         'self-end bg-green-100 text-right':
                                             message.role === 'user',
-                                        'bg-indigo-100':
+                                        'bg-indigo-100 ':
                                             message.role === 'assistant',
                                     }"
-                                    v-for="message in conversation.messages"
+                                    v-for="message in messages"
                                     :key="message.id"
+                                    v-show="message.body.length > 0"
                                 >
-                                    <p class="prose" v-html="message.body"></p>
-                                    <span class="text-xs text-gray-800">{{
-                                        message.role === "assistant"
-                                            ? "Assistant"
-                                            : "Moi"
-                                    }}</span>
-                                </li>
-                                <li
-                                    v-show="isAnswering"
-                                    class="w-[80%] p-4 rounded-lg col-span-8 bg-blue-200"
-                                >
-                                    <LoadingIcon
-                                        class="w-5 h-5 animate-spin text-blue-900"
-                                    />
-                                    <span class="text-xs text-gray-800"
-                                        >Assistant</span
+                                    <p
+                                        class="prose"
+                                        :class="{
+                                            'prose-headings:text-green-950 text-green-900':
+                                                message.role === 'user',
+                                            'prose-headings:text-indigo-950 text-indigo-900':
+                                                message.role === 'assistant',
+                                        }"
+                                        v-html="
+                                            markdownIt.render(
+                                                message.body ?? ''
+                                            )
+                                        "
+                                    ></p>
+                                    <span
+                                        class="text-xs"
+                                        :class="{
+                                            'text-green-700':
+                                                message.role === 'user',
+                                            'text-indigo-700':
+                                                message.role === 'assistant',
+                                        }"
+                                        >{{
+                                            message.role === "assistant"
+                                                ? "Assistant"
+                                                : "Moi"
+                                        }}</span
                                     >
                                 </li>
                             </ul>
@@ -278,9 +305,6 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                             <div class="flex flex-col">
                                 <InputError :message="form.errors.prompt" />
                                 <InputError
-                                    :message="formAnswer.errors.model"
-                                />
-                                <InputError
                                     v-if="isTokenLimitReached"
                                     message="La limite de token est atteinte."
                                 />
@@ -291,7 +315,7 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                                     'text-red-600': isTokenLimitReached,
                                 }"
                             >
-                                {{ conversation.token_count }} tokens
+                                {{ tokenCount }} tokens
                             </div>
                         </div>
                     </div>
