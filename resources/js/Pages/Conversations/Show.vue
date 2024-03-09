@@ -27,7 +27,10 @@ const tokenCount = ref(
 );
 const title = ref(props.conversation.title);
 let messages = reactive(props.conversation.messages);
-let assistantMessage = null;
+let assistantMessage = {
+    role: "assistant",
+    body: "",
+};
 
 const isTokenLimitReached = computed(() => {
     const tokenLimit = props.selectedModel
@@ -47,7 +50,6 @@ const send = async () => {
     }
 
     const prompt = form.prompt;
-    isAnswering.value = true;
 
     form.post(
         route("messages.send", { conversationId: props.conversation.id }),
@@ -62,8 +64,13 @@ const send = async () => {
                     role: "user",
                     body: prompt,
                 });
-                await wait(1);
+
+                messages.push(assistantMessage);
+                isAnswering.value = true;
+
+                await wait(2);
                 scrollChatBox();
+
                 answer();
             },
             onError: () => {
@@ -77,15 +84,6 @@ const answer = async () => {
     if (isTokenLimitReached.value) {
         return;
     }
-
-    assistantMessage = reactive({
-        role: "assistant",
-        body: "",
-    });
-    messages.push(assistantMessage);
-
-    await wait(1);
-    scrollChatBox();
 
     // transform the form call below to a axios call
     axios
@@ -116,9 +114,13 @@ Echo.private(`conversations.${props.conversation.id}`)
         scrollChatBox();
         assistantMessage.body += e.text;
     })
-    .listen("StopMessage", (e) => {
-        assistantMessage = null;
+    .listen("StopMessage", async (e) => {
+        assistantMessage = {
+            role: "assistant",
+            body: "",
+        };
         tokenCount.value += e.tokenCount;
+        await wait(2);
         scrollChatBox();
         updateTitle();
     });
@@ -179,6 +181,21 @@ const updateSelectedModel = (value) => {
 };
 
 const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const promptExamples = [
+    {
+        prompt: "Bonjour. Qui es-tu ?",
+    },
+    {
+        prompt: "Quel modèle de langage utilises-tu ?",
+    },
+    {
+        prompt: "Raconte-moi une blague.",
+    },
+    {
+        prompt: "lance une partie de pierre, papier, ciseaux.",
+    },
+];
 </script>
 
 <template>
@@ -234,14 +251,32 @@ const wait = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
                         </div>
 
                         <div class="">
-                            <ul
-                                class="bg-gray-100 p-4 mt-4 rounded-xl"
-                                v-if="!messages || !messages.length"
-                            >
-                                <li>
-                                    <p>Pas encore de message.</p>
-                                </li>
-                            </ul>
+                            <div v-if="!messages || !messages.length">
+                                <ul
+                                    class="bg-gray-100 p-4 mt-4 rounded-xl mb-6"
+                                >
+                                    <li>
+                                        <p>Pas encore de message.</p>
+                                    </li>
+                                </ul>
+
+                                <div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <button
+                                            v-for="example in promptExamples"
+                                            class="bg-indigo-100 p-4 rounded-md text-indigo-700 hover:text-indigo-900 border-2 border-indigo-700/20 hover:bg-indigo-200 hover:border-indigo-700/40 transition-all text-left"
+                                            @click.prevent="
+                                                form.prompt = example.prompt
+                                            "
+                                        >
+                                            <p class="text-xs">
+                                                {{ example.prompt }}
+                                            </p>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <ul
                                 v-else
                                 ref="chatBox"
