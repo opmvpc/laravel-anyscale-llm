@@ -108,32 +108,50 @@ class ConversationController extends Controller
 
         $conversation = Conversation::findOrFail($conversationId);
 
-        $userMessageTokenCount = \ceil(\mb_strlen($conversation->messages()->latest()->first()->body) / 3);
+        $userMessageTokenCount = Chat::tokenCount($conversation->messages()->latest()->first()->body);
 
         NewMessage::dispatch($conversation, $userMessageTokenCount);
 
         $stream = Chat::stream($conversation, session('selectedModel', AIModels::NeuralHermes));
 
         $buffer = '';
+        $finalBuffer = '';
+        $lastSendTime = microtime(true); // Enregistrer le temps actuel
+
         foreach ($stream as $response) {
             if (isset($response->choices[0]->toArray()['delta']['finish_reason'])) {
+                if (!empty($buffer)) {
+                    StreamText::dispatch($conversation, $buffer); // Envoyer le reste du buffer
+                    $finalBuffer .= $buffer;
+                }
+
                 break;
             }
 
             if (isset($response->choices[0]->toArray()['delta']['content'])) {
                 $text = $response->choices[0]->toArray()['delta']['content'];
-                StreamText::dispatch($conversation, $text);
                 $buffer .= $text;
+                $finalBuffer .= $text;
+            }
+
+            // Générer un intervalle aléatoire entre 15ms et 50ms
+            $randomInterval = rand(15000, 50000); // us (microsecondes)
+
+            // Vérifier si l'intervalle aléatoire s'est écoulé
+            if ((microtime(true) - $lastSendTime) >= ($randomInterval / 1000000.0)) {
+                StreamText::dispatch($conversation, $buffer);
+                $buffer = ''; // Réinitialiser le buffer
+                $lastSendTime = microtime(true); // Réinitialiser le temps du dernier envoi
             }
         }
 
-        $tokenCount = \ceil(\mb_strlen($buffer) / 3);
+        $tokenCount = Chat::tokenCount($finalBuffer);
 
         StopMessage::dispatch($conversation, $tokenCount);
 
         $conversation->messages()->create([
             'role' => 'assistant',
-            'body' => $buffer,
+            'body' => $finalBuffer,
         ]);
 
         $conversation->update([

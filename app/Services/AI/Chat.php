@@ -55,7 +55,7 @@ class Chat
     {
         $systemPrompt = self::createSystemPrompt($conversation);
 
-        return \ceil(\mb_strlen($systemPrompt) / 3);
+        return self::tokenCount($systemPrompt);
     }
 
     public static function title(Conversation $conversation, AIModels $model)
@@ -160,6 +160,11 @@ class Chat
         }
 
         return $data['answer']['title'] ?? $currentTitle;
+    }
+
+    public static function tokenCount(string $text): int
+    {
+        return \ceil(\mb_strlen($text) / 4);
     }
 
     private static function createSystemPrompt(Conversation $conversation): string
