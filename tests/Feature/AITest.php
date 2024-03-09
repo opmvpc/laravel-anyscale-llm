@@ -48,10 +48,11 @@ class AITest extends TestCase
                 'role' => $message['role'],
             ]);
         }
+        for ($i = 0; $i < 1; ++$i) {
+            $title = Chat::title($conversation, AIModels::Mixtral);
 
-        $title = Chat::title($conversation, AIModels::Mistral);
-
-        $this->assertIsString($title);
+            $this->assertIsString($title);
+        }
     }
 
     public function testEmptyChat(): void

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\NewConversationTitle;
 use App\Events\NewMessage;
 use App\Events\StopMessage;
 use App\Events\StreamText;
@@ -62,16 +61,9 @@ class ConversationController extends Controller
 
         $this->authorize('update', $conversation);
 
-        $model = AIModels::Mistral;
-        if ($conversation->token_count > AIModels::toArray()[AIModels::Mistral->value]['maxTokens']) {
-            $model = AIModels::Mixtral;
-        }
+        $model = AIModels::Mixtral;
 
-        try {
-            $title = Chat::title($conversation, $model);
-        } catch (\Throwable $th) {
-            $title = $conversation->title;
-        }
+        $title = Chat::title($conversation, $model);
 
         // if title starts or ends with ", remove them
         $title = \preg_replace('/^"/', '', $title);
@@ -81,7 +73,7 @@ class ConversationController extends Controller
             'title' => $title,
         ]);
 
-        NewConversationTitle::dispatch($conversation, $title);
+        return response()->json(['title' => $title]);
     }
 
     public function send(int $conversationId, Request $request)
@@ -119,30 +111,33 @@ class ConversationController extends Controller
         $lastSendTime = microtime(true); // Enregistrer le temps actuel
 
         foreach ($stream as $response) {
-            if (isset($response->choices[0]->toArray()['delta']['finish_reason'])) {
-                if (!empty($buffer)) {
-                    StreamText::dispatch($conversation, $buffer); // Envoyer le reste du buffer
-                    $finalBuffer .= $buffer;
-                }
-
-                break;
-            }
-
             if (isset($response->choices[0]->toArray()['delta']['content'])) {
                 $text = $response->choices[0]->toArray()['delta']['content'];
                 $buffer .= $text;
                 $finalBuffer .= $text;
             }
 
-            // Générer un intervalle aléatoire entre 15ms et 50ms
-            $randomInterval = rand(15000, 50000); // us (microsecondes)
+            // Générer un intervalle aléatoire entre 30ms et 75ms
+            $randomInterval = rand(30000, 75000); // us (microsecondes)
 
             // Vérifier si l'intervalle aléatoire s'est écoulé
             if ((microtime(true) - $lastSendTime) >= ($randomInterval / 1000000.0)) {
-                StreamText::dispatch($conversation, $buffer);
-                $buffer = ''; // Réinitialiser le buffer
-                $lastSendTime = microtime(true); // Réinitialiser le temps du dernier envoi
+                if (!empty($buffer)) {
+                    StreamText::dispatch($conversation, $buffer);
+                    $buffer = ''; // Réinitialiser le buffer
+                    $lastSendTime = microtime(true); // Réinitialiser le temps du dernier envoi
+                }
             }
+
+            if (isset($response->choices[0]->toArray()['delta']['finish_reason'])) {
+                break;
+            }
+        }
+
+        // Vérifier et envoyer les données restantes dans le buffer après la boucle
+        if (!empty($buffer)) {
+            StreamText::dispatch($conversation, $buffer);
+            $finalBuffer .= $buffer;
         }
 
         $tokenCount = Chat::tokenCount($finalBuffer);

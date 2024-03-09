@@ -118,10 +118,8 @@ Echo.private(`conversations.${props.conversation.id}`)
     .listen("StopMessage", (e) => {
         assistantMessage = null;
         tokenCount.value += e.tokenCount;
+        scrollChatBox();
         updateTitle();
-    })
-    .listen("NewConversationTitle", (e) => {
-        title.value = e.title;
     });
 
 onMounted(() => {
@@ -152,11 +150,11 @@ const updateTitle = () => {
                 })
             )
             .then((response) => {
-                console.log(response.data);
+                title.value = response.data.title;
                 isTitleUpdating.value = false;
             })
             .catch((error) => {
-                console.log(error.response.data);
+                console.log(error);
                 isTitleUpdating.value = false;
             });
     }

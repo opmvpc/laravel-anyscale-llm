@@ -87,7 +87,7 @@ class Chat
                 User Language: {$userLanguage}
 
                 ## Output format
-                - a valid json object
+                - you MUST provide VALID JSON output.
                 - Your final answer MUST be in the `title` field of the `answer` object.
                 - NEVER use emojis or special characters.
 
@@ -121,7 +121,7 @@ class Chat
 
         $response = $client->chat()->create([
             'model' => $model->value,
-            'temperature' => 0.5,
+            'temperature' => 0.7,
             'response_format' => [
                 'type' => 'json_object',
                 'schema' => <<<'EOT'
@@ -152,14 +152,23 @@ class Chat
             'messages' => $messages,
         ]);
 
-        try {
-            $json = $response['choices'][0]['message']['content'];
-            $data = json_decode($json, true);
-        } catch (\Throwable $th) {
-            throw new \RuntimeException('Failed to parse the response from the AI model.');
+        $tries = 0;
+        $data = [];
+        do {
+            try {
+                $json = $response['choices'][0]['message']['content'];
+                $data = json_decode($json, true);
+            } catch (\Throwable $th) {
+                throw new \RuntimeException('Failed to parse the response from the AI model.');
+            }
+            ++$tries;
+        } while ($tries < 3 && empty($data['answer']['title']));
+
+        if (empty($data['answer']['title'])) {
+            return $currentTitle;
         }
 
-        return $data['answer']['title'] ?? $currentTitle;
+        return $data['answer']['title'];
     }
 
     public static function tokenCount(string $text): int
@@ -169,7 +178,7 @@ class Chat
 
     private static function createSystemPrompt(Conversation $conversation): string
     {
-        $date = date('Y-m-d');
+        $date = date('l, jS \of F Y. H:i:s');
         $userName = $conversation->user->name;
         $userLanguage = app()->getLocale();
 
@@ -183,7 +192,7 @@ class Chat
                     - Use emojis to express emotions and friendly behavior.
 
                     ## Output format
-                    - Use Markdown to format your messages.
+                    - Use Github flavored Markdown to format your messages. (Titles, Lists, Emphasis, Links, Tables, CodeBlocks ...)
 
                     ## Information
                     Today's date is : {$date}
