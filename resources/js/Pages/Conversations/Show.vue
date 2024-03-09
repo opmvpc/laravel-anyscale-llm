@@ -196,6 +196,11 @@ const promptExamples = [
         prompt: "lance une partie de pierre, papier, ciseaux.",
     },
 ];
+
+const launchExamplePrompt = (prompt) => {
+    form.prompt = prompt;
+    send();
+};
 </script>
 
 <template>
@@ -251,7 +256,10 @@ const promptExamples = [
                         </div>
 
                         <div class="">
-                            <div v-if="!messages || !messages.length">
+                            <div
+                                v-if="!messages || !messages.length"
+                                class="h-[50vh] flex flex-col justify-between"
+                            >
                                 <ul
                                     class="bg-gray-100 p-4 mt-4 rounded-xl mb-6"
                                 >
@@ -266,7 +274,9 @@ const promptExamples = [
                                             v-for="example in promptExamples"
                                             class="bg-indigo-100 p-4 rounded-md text-indigo-700 hover:text-indigo-900 border-2 border-indigo-700/20 hover:bg-indigo-200 hover:border-indigo-700/40 transition-all text-left"
                                             @click.prevent="
-                                                form.prompt = example.prompt
+                                                launchExamplePrompt(
+                                                    example.prompt
+                                                )
                                             "
                                         >
                                             <p class="text-xs">
@@ -280,7 +290,7 @@ const promptExamples = [
                             <ul
                                 v-else
                                 ref="chatBox"
-                                class="bg-gray-100 p-4 mt-4 rounded-xl flex flex-col space-y-8 max-h-[50vh] overflow-y-auto"
+                                class="bg-gray-100 p-4 mt-4 rounded-xl flex flex-col space-y-8 h-[50vh] overflow-y-auto resize-y"
                             >
                                 <li
                                     class="max-w-[80%] p-4 rounded-lg"
