@@ -265,13 +265,13 @@ const logout = () => {
                                         <div
                                             class="block px-4 py-2 text-xs text-gray-400"
                                         >
-                                            Manage Account
+                                            Gérer le compte
                                         </div>
 
                                         <DropdownLink
                                             :href="route('profile.show')"
                                         >
-                                            Profile
+                                            Profil
                                         </DropdownLink>
 
                                         <DropdownLink
@@ -289,7 +289,7 @@ const logout = () => {
                                         <!-- Authentication -->
                                         <form @submit.prevent="logout">
                                             <DropdownLink as="button">
-                                                Log Out
+                                                Se déconnecter
                                             </DropdownLink>
                                         </form>
                                     </template>
@@ -398,7 +398,7 @@ const logout = () => {
                                 :href="route('profile.show')"
                                 :active="route().current('profile.show')"
                             >
-                                Profile
+                                Profil
                             </ResponsiveNavLink>
 
                             <ResponsiveNavLink
@@ -412,7 +412,7 @@ const logout = () => {
                             <!-- Authentication -->
                             <form method="POST" @submit.prevent="logout">
                                 <ResponsiveNavLink as="button">
-                                    Log Out
+                                    Se déconnecter
                                 </ResponsiveNavLink>
                             </form>
 
