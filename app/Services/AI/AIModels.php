@@ -15,9 +15,13 @@ enum AIModels: string
     case Zephyr = 'HuggingFaceH4/zephyr-7b-beta';
     case Mistral = 'mistralai/Mistral-7B-Instruct-v0.1';
     case Mixtral = 'mistralai/Mixtral-8x7B-Instruct-v0.1';
+    case Mixtral8x22B = 'mistralai/Mixtral-8x22B-Instruct-v0.1';
     case Llama7B = 'meta-llama/Llama-2-7b-chat-hf';
     case Llama13B = 'meta-llama/Llama-2-13b-chat-hf';
     case Llama70B = 'meta-llama/Llama-2-70b-chat-hf';
+    case Llama3Small = 'meta-llama/Llama-3-8b-chat-hf';
+    case Llama3Big = 'meta-llama/Llama-3-70b-chat-hf';
+
     case CodeLlama34B = 'codellama/CodeLlama-34b-Instruct-hf';
     case CodeLlama70B = 'codellama/CodeLlama-70b-Instruct-hf';
     case GroqLlama70B = 'llama2-70b-4096';
@@ -62,6 +66,12 @@ enum AIModels: string
                 'maxTokens' => 32768,
                 'provider' => 'Anyscale',
             ],
+            self::Mixtral8x22B->value => [
+                'name' => 'Mixtral 8x22B 64k',
+                'value' => self::Mixtral8x22B,
+                'maxTokens' => 65536,
+                'provider' => 'Anyscale',
+            ],
             self::Llama7B->value => [
                 'name' => 'Llama2 7B 4k',
                 'value' => self::Llama7B,
@@ -78,6 +88,18 @@ enum AIModels: string
                 'name' => 'Llama2 70B 4k',
                 'value' => self::Llama70B,
                 'maxTokens' => 4096,
+                'provider' => 'Anyscale',
+            ],
+            self::Llama3Small->value => [
+                'name' => 'Llama3 8B 8k',
+                'value' => self::Llama3Small,
+                'maxTokens' => 8192,
+                'provider' => 'Anyscale',
+            ],
+            self::Llama3Big->value => [
+                'name' => 'Llama3 70B 8k',
+                'value' => self::Llama3Big,
+                'maxTokens' => 8192,
                 'provider' => 'Anyscale',
             ],
             self::CodeLlama34B->value => [
